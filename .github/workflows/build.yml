@@ -1,0 +1,32 @@
+# This is free and unencumbered software released into the public domain.
+
+name: build
+
+on:
+  pull_request:
+  release:
+    types:
+      - created
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Build
+        uses: devcontainers/ci@v0.3
+        with:
+          push: never
+          runCmd: zig build -Dversion=${{ github.ref_name }}
+
+      - name: Publish
+        if: github.ref_type == 'tag'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.ref_name }} zig-out/*.zip

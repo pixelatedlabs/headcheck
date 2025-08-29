@@ -1,0 +1,13 @@
+{
+	"build": {
+		"dockerfile": "dev.containerfile"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"EditorConfig.EditorConfig",
+				"ziglang.vscode-zig"
+			]
+		}
+	}
+}

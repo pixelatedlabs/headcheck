@@ -1,0 +1,5 @@
+# This is free and unencumbered software released into the public domain.
+
+[*]
+insert_final_newline = true
+trim_trailing_whitespace = true

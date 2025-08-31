@@ -1,2 +1,0 @@
-_default:
-	zig run system.zig -- /workspaces/Headcheck/zig-out/bin/headcheck 0.0.0

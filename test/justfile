@@ -1,0 +1,10 @@
+_default:
+	just --list
+
+alias b := build
+build:
+	zig build-exe system.zig
+
+alias r := run
+run:
+	./system /workspaces/Headcheck/zig-out/bin/headcheck

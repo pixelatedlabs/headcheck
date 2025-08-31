@@ -2,8 +2,19 @@
 
 const std = @import("std");
 
+const Args = struct { binary: []u8, version: []u8 };
+
 pub fn main() !void {
-    try tooFewArguments();
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    const allocator = arena.allocator();
+    defer arena.deinit();
+
+    const args = Args{
+        .binary = try std.process.getEnvVarOwned(allocator, "HEADCHECK_BINARY"),
+        .version = try std.process.getEnvVarOwned(allocator, "HEADCHECK_VERSION"),
+    };
+
+    try tooFewArguments(allocator, args);
     try tooManyArguments();
     try invalidUrl();
     try validUrlWithSuccessfulResponse();
@@ -12,15 +23,10 @@ pub fn main() !void {
     try versionText();
 }
 
-fn tooFewArguments() !void {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    const allocator = arena.allocator();
-    defer arena.deinit();
-
-    const binary = try std.process.getEnvVarOwned(allocator, "HEADCHECK_BINARY");
+fn tooFewArguments(allocator: std.mem.Allocator, args: Args) !void {
     const child = try std.process.Child.run(.{
         .allocator = allocator,
-        .argv = &[_][]const u8{binary},
+        .argv = &[_][]const u8{args.binary},
     });
 
     try std.testing.expectEqual(2, child.term.Exited);

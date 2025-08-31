@@ -2,7 +2,7 @@
 
 # Headcheck
 
-```sh
+```ruby
 headcheck http://localhost:8080
 ```
 
@@ -56,7 +56,7 @@ Useful things to know when running headcheck:
 - Headcheck can not follow redirects - they are considered to be failures
 - URLs must be fully formed - this ensures that the chosen scheme is explicit
 
-```sh
+```ruby
 # Valid
 http://localhost:8080
 https://example.com/foo/bar?baz

@@ -8,3 +8,7 @@ build:
 alias r := run
 run:
 	./system /workspaces/Headcheck/zig-out/bin/headcheck
+
+alias t := test
+test:
+	zig test system.zig

@@ -7,33 +7,16 @@ test "Too few arguments" {
     const allocator = arena.allocator();
     defer arena.deinit();
 
+    const binary = try std.process.getEnvVarOwned(allocator, "HEADCHECK_BINARY");
+
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    // const argv = [_][]const u8{args[1]};
-    const argv = [_][]const u8{"/workspaces/Headcheck/zig-out/bin/headcheck"};
-    // std.process.Child.run(.{})
+    const argv = [_][]const u8{binary};
     const child = try std.process.Child.run(.{
         .allocator = allocator,
         .argv = &argv,
     });
-    // child.stderr_behavior = .Pipe;
-    // child.stdout_behavior = .Pipe;
-    // try child.spawn();
-    // var stdout = std.ArrayListAlignedUnmanaged(u8, u29);
-    // defer stdout.deinit();
-    // var stderr = std.ArrayListAlignedUnmanaged(u8).init(std.testing.allocator);
-    // defer stderr.deinit();
-    // //yes, a bit overkill with max_output_bytes, but that's not the point here
-    // try child.collectOutput(allocator, &stdout, &stderr, 50);
-    // const exit = try child.wait();
-    // const stdout = child.stdout orelse unreachable;
-    // var buf: [4096]u8 = undefined;
-    // const len = try stdout.preadAll(&buf, 0);
-    // _ = len;
-    // const eq = std.mem.eql(u8, child.stdout, "usage: headcheck <url>\n");
-    // std.testing.expectEqualStrings(expected: []const u8, actual: []const u8)
-    // try std.testing.expectEqual(23, child.stdout.len);
     try std.testing.expectEqualStrings("usage: headcheck <url>\n", child.stdout);
     try std.testing.expect(child.term.Exited == 2);
 }

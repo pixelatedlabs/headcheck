@@ -1,3 +1,5 @@
+export HEADCHECK_BINARY := "/workspaces/Headcheck/zig-out/bin/headcheck"
+
 _default:
 	just --list
 

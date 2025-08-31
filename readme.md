@@ -2,7 +2,7 @@
 
 # Headcheck
 
-```sh
+```shell
 headcheck http://localhost:8080
 ```
 

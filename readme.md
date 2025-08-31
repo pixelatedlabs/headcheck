@@ -2,7 +2,7 @@
 
 # Headcheck
 
-```shell
+```ruby
 headcheck http://localhost:8080
 ```
 

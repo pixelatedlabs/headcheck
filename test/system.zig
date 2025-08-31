@@ -31,7 +31,9 @@ test "Too few arguments" {
     // var buf: [4096]u8 = undefined;
     // const len = try stdout.preadAll(&buf, 0);
     // _ = len;
-    // const eq = std.mem.eql(u8, &buf, "usage: headcheck <url>\n");
-    // try std.testing.expect(eq);
+    // const eq = std.mem.eql(u8, child.stdout, "usage: headcheck <url>\n");
+    // std.testing.expectEqualStrings(expected: []const u8, actual: []const u8)
+    // try std.testing.expectEqual(23, child.stdout.len);
+    try std.testing.expectEqualStrings("usage: headcheck <url>\n", child.stdout);
     try std.testing.expect(child.term.Exited == 2);
 }

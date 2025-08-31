@@ -2,7 +2,17 @@
 
 const std = @import("std");
 
-test "Too few arguments" {
+pub fn main() !void {
+    try tooFewArguments();
+    try tooManyArguments();
+    try invalidUrl();
+    try validUrlWithSuccessfulResponse();
+    try validUrlWithUnsuccessfulResponse();
+    try helpText();
+    try versionText();
+}
+
+fn tooFewArguments() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const allocator = arena.allocator();
     defer arena.deinit();
@@ -17,7 +27,7 @@ test "Too few arguments" {
     try std.testing.expectEqualStrings("usage: headcheck <url>\n", child.stdout);
 }
 
-test "Too many arguments" {
+fn tooManyArguments() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const allocator = arena.allocator();
     defer arena.deinit();
@@ -32,7 +42,7 @@ test "Too many arguments" {
     try std.testing.expectEqualStrings("usage: headcheck <url>\n", child.stdout);
 }
 
-test "Invalid URL" {
+fn invalidUrl() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const allocator = arena.allocator();
     defer arena.deinit();
@@ -47,7 +57,7 @@ test "Invalid URL" {
     try std.testing.expectEqualStrings("unparseable: baz\n", child.stdout);
 }
 
-test "Valid URL with successful response" {
+fn validUrlWithSuccessfulResponse() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const allocator = arena.allocator();
     defer arena.deinit();
@@ -62,7 +72,7 @@ test "Valid URL with successful response" {
     try std.testing.expectEqualStrings("success: 200\n", child.stdout);
 }
 
-test "Valid URL with unsuccessful response" {
+fn validUrlWithUnsuccessfulResponse() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const allocator = arena.allocator();
     defer arena.deinit();
@@ -77,7 +87,7 @@ test "Valid URL with unsuccessful response" {
     try std.testing.expectEqualStrings("failure: 301\n", child.stdout);
 }
 
-test "Help text" {
+fn helpText() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const allocator = arena.allocator();
     defer arena.deinit();
@@ -92,7 +102,7 @@ test "Help text" {
     try std.testing.expectEqualStrings("docs: https://pixelatedlabs.com/headcheck\n", child.stdout);
 }
 
-test "Version text" {
+fn versionText() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const allocator = arena.allocator();
     defer arena.deinit();

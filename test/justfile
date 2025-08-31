@@ -2,16 +2,4 @@ export HEADCHECK_BINARY := "/workspaces/Headcheck/zig-out/bin/headcheck"
 export HEADCHECK_VERSION := "0.0.0"
 
 _default:
-	just --list
-
-alias b := build
-build:
-	zig build-exe system.zig
-
-alias r := run
-run:
-	./system /workspaces/Headcheck/zig-out/bin/headcheck
-
-alias t := test
-test:
-	zig test system.zig
+	zig run system.zig

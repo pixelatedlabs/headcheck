@@ -103,6 +103,9 @@ test "Version text" {
         .argv = &[_][]const u8{ binary, "--version" },
     });
 
+    const version = try std.process.getEnvVarOwned(allocator, "HEADCHECK_VERSION");
+    const output = try std.fmt.allocPrint(allocator, "version: {s}\n", .{version});
+
     try std.testing.expectEqual(0, child.term.Exited);
-    try std.testing.expectEqualStrings("version: 0.0.0\n", child.stdout);
+    try std.testing.expectEqualStrings(output, child.stdout);
 }

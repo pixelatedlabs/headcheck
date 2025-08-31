@@ -12,10 +12,12 @@ pub fn build(b: *std.Build) void {
     const compile = b.addExecutable(.{
         .name = "headcheck",
         .root_module = b.createModule(.{
-            .optimize = std.builtin.OptimizeMode.ReleaseSmall,
+            .omit_frame_pointer = true,
+            .optimize = .ReleaseSmall,
             .root_source_file = b.path("src/main.zig"),
             .single_threaded = true,
             .target = b.graph.host,
+            .unwind_tables = .none,
         }),
     });
     compile.root_module.addOptions("config", options);
@@ -41,7 +43,6 @@ pub fn build(b: *std.Build) void {
     // Install raw output.
     const compile_output = b.addInstallArtifact(compile, .{});
     compile_output.step.dependOn(&archive.step);
-    b.getInstallStep().dependOn(&compile_output.step);
 
     // Install full compressed output.
     const full = b.addInstallFile(archive_path, b.fmt("{s}_{s}.zip", .{
@@ -51,7 +52,7 @@ pub fn build(b: *std.Build) void {
             else => |a| @tagName(a),
         },
     }));
-    b.getInstallStep().dependOn(&full.step);
+    full.step.dependOn(&compile_output.step);
 
     // Install short compressed output.
     const short = b.addInstallFile(archive_path, b.fmt("{s}_{s}_{s}_{s}.zip", .{
@@ -63,5 +64,6 @@ pub fn build(b: *std.Build) void {
         },
         version,
     }));
+    short.step.dependOn(&full.step);
     b.getInstallStep().dependOn(&short.step);
 }

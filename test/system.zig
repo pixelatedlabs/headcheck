@@ -90,7 +90,6 @@ fn versionText(allocator: std.mem.Allocator, args: Args) !void {
     });
 
     const output = try std.fmt.allocPrint(allocator, "version: {s}\n", .{args.version});
-
     try std.testing.expectEqual(0, child.term.Exited);
     try std.testing.expectEqualStrings(output, child.stdout);
 }

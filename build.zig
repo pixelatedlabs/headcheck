@@ -13,7 +13,7 @@ pub fn build(b: *std.Build) void {
         .name = "headcheck",
         .root_module = b.createModule(.{
             .optimize = std.builtin.OptimizeMode.ReleaseSmall,
-            .root_source_file = b.path("src/headcheck.zig"),
+            .root_source_file = b.path("src/main.zig"),
             .single_threaded = true,
             .target = b.graph.host,
         }),
@@ -27,7 +27,7 @@ pub fn build(b: *std.Build) void {
     compress.step.dependOn(&compile.step);
 
     // Run python tests.
-    const testing = b.addSystemCommand(&.{ "python", "test/headcheck.py" });
+    const testing = b.addSystemCommand(&.{ "python", "test/system.py" });
     testing.addFileArg(compile.getEmittedBin());
     testing.addArg(version);
     testing.step.dependOn(&compress.step);

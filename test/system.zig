@@ -13,6 +13,6 @@ test "Too few arguments" {
         .argv = &[_][]const u8{binary},
     });
 
+    try std.testing.expectEqual(2, child.term.Exited);
     try std.testing.expectEqualStrings("usage: headcheck <url>\n", child.stdout);
-    try std.testing.expect(child.term.Exited == 2);
 }

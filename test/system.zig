@@ -9,21 +9,19 @@ pub fn main() !void {
     const allocator = arena.allocator();
     defer arena.deinit();
 
-    const processArgs = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, processArgs);
-
-    const args = Args{
-        .binary = processArgs[1],
-        .version = processArgs[2],
+    const args = try std.process.argsAlloc(allocator);
+    const testArgs = Args{
+        .binary = args[1],
+        .version = args[2],
     };
 
-    try tooFewArguments(allocator, args);
-    try tooManyArguments(allocator, args);
-    try invalidUrl(allocator, args);
-    try validUrlWithSuccessfulResponse(allocator, args);
-    try validUrlWithUnsuccessfulResponse(allocator, args);
-    try helpText(allocator, args);
-    try versionText(allocator, args);
+    try tooFewArguments(allocator, testArgs);
+    try tooManyArguments(allocator, testArgs);
+    try invalidUrl(allocator, testArgs);
+    try validUrlWithSuccessfulResponse(allocator, testArgs);
+    try validUrlWithUnsuccessfulResponse(allocator, testArgs);
+    try helpText(allocator, testArgs);
+    try versionText(allocator, testArgs);
 }
 
 fn tooFewArguments(allocator: std.mem.Allocator, args: Args) !void {

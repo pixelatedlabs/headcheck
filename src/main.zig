@@ -9,8 +9,6 @@ pub fn main() !void {
     defer arena.deinit();
 
     const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
-
     if (args.len != 2) {
         print("usage: headcheck <url>\n", .{});
         std.process.exit(2);

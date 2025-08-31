@@ -28,8 +28,8 @@ pub fn build(b: *std.Build) void {
     compress.addFileArg(compile.getEmittedBin());
     compress.step.dependOn(&compile.step);
 
-    // Run python tests.
-    const testing = b.addSystemCommand(&.{ "python", "test/system.py" });
+    // Run system tests.
+    const testing = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
     testing.addFileArg(compile.getEmittedBin());
     testing.addArg(version);
     testing.step.dependOn(&compress.step);

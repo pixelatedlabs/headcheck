@@ -2,4 +2,4 @@
 
 FROM quay.io/fedora/fedora:42
 
-RUN dnf --assumeyes --setopt=install_weak_deps=false install git python upx zig zip
+RUN dnf --assumeyes --setopt=install_weak_deps=false install git upx zig zip

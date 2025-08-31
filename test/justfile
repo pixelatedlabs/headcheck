@@ -1,5 +1,2 @@
-export HEADCHECK_BINARY := "/workspaces/Headcheck/zig-out/bin/headcheck"
-export HEADCHECK_VERSION := "0.0.0"
-
 _default:
-	zig run system.zig
+	zig run system.zig -- /workspaces/Headcheck/zig-out/bin/headcheck 0.0.0

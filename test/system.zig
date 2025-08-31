@@ -9,9 +9,12 @@ pub fn main() !void {
     const allocator = arena.allocator();
     defer arena.deinit();
 
+    const processArgs = try std.process.argsAlloc(allocator);
+    defer std.process.argsFree(allocator, processArgs);
+
     const args = Args{
-        .binary = try std.process.getEnvVarOwned(allocator, "HEADCHECK_BINARY"),
-        .version = try std.process.getEnvVarOwned(allocator, "HEADCHECK_VERSION"),
+        .binary = processArgs[1],
+        .version = processArgs[2],
     };
 
     try tooFewArguments(allocator, args);

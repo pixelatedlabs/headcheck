@@ -65,9 +65,7 @@ pub fn build(b: *std.Build) void {
     compile_output.step.dependOn(&archive.step);
 
     // Install full compressed output.
-    const full = b.addInstallFile(archive_path, b.fmt("{s}.zip", .{
-        platform,
-    }));
+    const full = b.addInstallFile(archive_path, b.fmt("{s}.zip", .{platform}));
     full.step.dependOn(&compile_output.step);
 
     // Install short compressed output.

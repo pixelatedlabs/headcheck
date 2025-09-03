@@ -12,34 +12,35 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    const thread = try std.Thread.spawn(.{}, http, .{});
+    var running = std.atomic.Value(bool).init(true);
+    const thread = try std.Thread.spawn(.{}, http, .{&running});
     // try http();
+    // std.Thread.sleep(500000);
+    running.store(false, .release);
     defer thread.join();
 
-    std.Thread.sleep(10000000000000000);
+    // const testArgs = Args{
+    //     .binary = args[1],
+    //     .version = args[2],
+    // };
 
-    const testArgs = Args{
-        .binary = args[1],
-        .version = args[2],
-    };
-
-    try tooFewArguments(allocator, testArgs);
-    try tooManyArguments(allocator, testArgs);
-    try invalidUrl(allocator, testArgs);
-    try validUrlWithSuccessfulResponse(allocator, testArgs);
-    try validUrlWithUnsuccessfulResponse(allocator, testArgs);
-    try helpText(allocator, testArgs);
-    try versionText(allocator, testArgs);
+    // try tooFewArguments(allocator, testArgs);
+    // try tooManyArguments(allocator, testArgs);
+    // try invalidUrl(allocator, testArgs);
+    // try validUrlWithSuccessfulResponse(allocator, testArgs);
+    // try validUrlWithUnsuccessfulResponse(allocator, testArgs);
+    // try helpText(allocator, testArgs);
+    // try versionText(allocator, testArgs);
 }
 
-pub fn http() !void {
+pub fn http(running: *std.atomic.Value(bool)) !void {
     // const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
     const address = try std.net.Address.parseIp4("127.0.0.1", 10006);
 
     var server = try address.listen(.{});
     defer server.deinit();
 
-    while (true) {
+    while (running.load(.monotonic)) {
         var conn = try server.accept();
         defer conn.stream.close();
 

@@ -12,33 +12,7 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
-
-    var server = try address.listen(.{});
-    defer server.deinit();
-
-    // while (true) {
-    var conn = try server.accept();
-    defer conn.stream.close();
-
-    // std.debug.print("{s}", conn.address);
-    var buffer: [1024]u8 = undefined;
-    var http_server = std.http.Server.init(conn, &buffer);
-    var req = try http_server.receiveHead();
-    const trimmed = std.mem.trimLeft(u8, req.head.target, "/");
-    const value = try std.fmt.parseInt(i32, trimmed, 10);
-    const status: std.http.Status = @enumFromInt(value);
-    // const status = std.meta.stringToEnum(std.http.Status, trimmed) orelse .ok;
-
-    std.debug.print("{s}\n", .{trimmed});
-    std.debug.print("{d}\n", .{value});
-    std.debug.print("{s}\n", .{@tagName(status)});
-
-    // std.debug.print("{s}\n", .{@tagName(req.head.method)});
-    // std.debug.print("{s}\n", .{req.head.target});
-    // std.debug.print("{s}\n", .{@tagName(status)});
-    try req.respond("", .{ .status = status });
-    // }
+    try http();
 
     const testArgs = Args{
         .binary = args[1],
@@ -52,6 +26,37 @@ pub fn main() !void {
     try validUrlWithUnsuccessfulResponse(allocator, testArgs);
     try helpText(allocator, testArgs);
     try versionText(allocator, testArgs);
+}
+
+pub fn http() !void {
+    // const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
+    const address = try std.net.Address.parseIp4("127.0.0.1", 10003);
+
+    var server = try address.listen(.{});
+    defer server.deinit();
+
+    while (true) {
+        var conn = try server.accept();
+        defer conn.stream.close();
+
+        // std.debug.print("{s}", conn.address);
+        var buffer: [1024]u8 = undefined;
+        var http_server = std.http.Server.init(conn, &buffer);
+        var req = try http_server.receiveHead();
+        const trimmed = std.mem.trimLeft(u8, req.head.target, "/");
+        const value = try std.fmt.parseInt(i32, trimmed, 10);
+        const status: std.http.Status = @enumFromInt(value);
+        // const status = std.meta.stringToEnum(std.http.Status, trimmed) orelse .ok;
+
+        std.debug.print("{s}\n", .{trimmed});
+        std.debug.print("{d}\n", .{value});
+        std.debug.print("{s}\n", .{@tagName(status)});
+
+        // std.debug.print("{s}\n", .{@tagName(req.head.method)});
+        // std.debug.print("{s}\n", .{req.head.target});
+        // std.debug.print("{s}\n", .{@tagName(status)});
+        try req.respond("", .{ .status = status });
+    }
 }
 
 fn tooFewArguments(allocator: std.mem.Allocator, args: Args) !void {

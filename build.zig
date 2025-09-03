@@ -8,7 +8,7 @@ pub fn build(b: *std.Build) void {
     const options = b.addOptions();
     options.addOption([]const u8, "version", version);
 
-    const target = b.standardTargetOptions(.{});
+    const target = b.standardTargetOptions(.{ .default_target = b.graph.host.query });
 
     // Build for arm64.
     crossBuild(b, options, version, target);

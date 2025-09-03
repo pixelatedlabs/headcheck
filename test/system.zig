@@ -19,18 +19,18 @@ pub fn main() !void {
     running.store(false, .release);
     defer thread.join();
 
-    // const testArgs = Args{
-    //     .binary = args[1],
-    //     .version = args[2],
-    // };
+    const testArgs = Args{
+        .binary = args[1],
+        .version = args[2],
+    };
 
-    // try tooFewArguments(allocator, testArgs);
-    // try tooManyArguments(allocator, testArgs);
-    // try invalidUrl(allocator, testArgs);
-    // try validUrlWithSuccessfulResponse(allocator, testArgs);
-    // try validUrlWithUnsuccessfulResponse(allocator, testArgs);
-    // try helpText(allocator, testArgs);
-    // try versionText(allocator, testArgs);
+    try tooFewArguments(allocator, testArgs);
+    try tooManyArguments(allocator, testArgs);
+    try invalidUrl(allocator, testArgs);
+    try validUrlWithSuccessfulResponse(allocator, testArgs);
+    try validUrlWithUnsuccessfulResponse(allocator, testArgs);
+    try helpText(allocator, testArgs);
+    try versionText(allocator, testArgs);
 }
 
 pub fn http(running: *std.atomic.Value(bool)) !void {

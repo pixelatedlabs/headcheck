@@ -66,6 +66,12 @@ localhost:8080
 example.com/foo/bar?baz
 ```
 
+# Contributing
+
+Contributions are welcome! However, please note that headcheck has an intentionally limited scope
+and is considered primarily feature complete. If you're unsure whether a PR is a good fit please
+open an issue first to discuss it.
+
 # License
 
 This is free and unencumbered software released into the public domain.

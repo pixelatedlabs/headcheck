@@ -2,28 +2,28 @@
 
 const std = @import("std");
 
-pub fn build(b: *std.Build) !void {
+pub fn build(b: *std.Build) void {
     // Add version option.
     const version = b.option([]const u8, "version", "version") orelse "0.0.0";
     const options = b.addOptions();
     options.addOption([]const u8, "version", version);
 
     // Build for arm64.
-    try crossBuild(b, options, version, b.resolveTargetQuery(.{
+    crossBuild(b, options, version, b.resolveTargetQuery(.{
         .cpu_arch = .aarch64,
         .cpu_model = .baseline,
         .os_tag = .linux,
     }));
 
     // Build for x64.
-    try crossBuild(b, options, version, b.resolveTargetQuery(.{
+    crossBuild(b, options, version, b.resolveTargetQuery(.{
         .cpu_arch = .x86_64,
         .cpu_model = .native,
         .os_tag = .linux,
     }));
 }
 
-fn crossBuild(b: *std.Build, options: *std.Build.Step.Options, version: []const u8, target: std.Build.ResolvedTarget) !void {
+fn crossBuild(b: *std.Build, options: *std.Build.Step.Options, version: []const u8, target: std.Build.ResolvedTarget) void {
     // Compile source code.
     const compile = b.addExecutable(.{
         .name = "headcheck",

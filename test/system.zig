@@ -13,11 +13,10 @@ pub fn main() !void {
     defer std.process.argsFree(allocator, args);
 
     var running = std.atomic.Value(bool).init(true);
-    const thread = try std.Thread.spawn(.{}, http, .{&running});
+    var thread = try std.Thread.spawn(.{}, http, .{&running});
+    defer thread.join();
     // try http();
     // std.Thread.sleep(500000);
-    running.store(false, .release);
-    defer thread.join();
 
     const testArgs = Args{
         .binary = args[1],
@@ -31,10 +30,12 @@ pub fn main() !void {
     try validUrlWithUnsuccessfulResponse(allocator, testArgs);
     try helpText(allocator, testArgs);
     try versionText(allocator, testArgs);
+
+    running.store(false, .release);
 }
 
 pub fn http(running: *std.atomic.Value(bool)) !void {
-    const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
+    const address = try std.net.Address.parseIp4("127.0.0.1", 47637);
 
     var server = try address.listen(.{});
     defer server.deinit();
@@ -96,7 +97,7 @@ fn invalidUrl(allocator: std.mem.Allocator, args: Args) !void {
 fn validUrlWithSuccessfulResponse(allocator: std.mem.Allocator, args: Args) !void {
     const child = try std.process.Child.run(.{
         .allocator = allocator,
-        .argv = &[_][]const u8{ args.binary, "http://www.google.com" },
+        .argv = &[_][]const u8{ args.binary, "http://localhost:47637/200" },
     });
 
     try std.testing.expectEqual(0, child.term.Exited);

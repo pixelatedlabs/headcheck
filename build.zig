@@ -58,9 +58,7 @@ pub fn build(b: *std.Build) void {
     // Install raw output.
     const compile_output = b.addInstallArtifact(
         compile,
-        .{ .dest_dir = .{ .override = .{
-            .custom = platform,
-        } } },
+        .{ .dest_dir = .{ .override = .{ .custom = platform } } },
     );
     compile_output.step.dependOn(&archive.step);
 

@@ -37,7 +37,7 @@ pub fn main() !void {
     // std.debug.print("{s}\n", .{@tagName(req.head.method)});
     // std.debug.print("{s}\n", .{req.head.target});
     // std.debug.print("{s}\n", .{@tagName(status)});
-    try req.respond("hello world\n", std.http.Server.Request.RespondOptions{});
+    try req.respond("", .{ .status = status });
     // }
 
     const testArgs = Args{

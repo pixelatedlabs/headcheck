@@ -28,14 +28,17 @@ jobs:
 
       - name: Build
         uses: devcontainers/ci@v0.3
+        if: github.event_name == 'release'
         with:
           push: never
-          runCmd: |
-            if [ "$GITHUB_EVENT_NAME" == "release" ]; then
-              zig build -Dversion=${{ github.ref_name }}
-            else
-              zig build
-            fi
+          runCmd: zig build -Dversion=${{ github.ref_name }}
+
+      - name: Build
+        uses: devcontainers/ci@v0.3
+        if: github.event_name != 'release'
+        with:
+          push: never
+          runCmd: zig build
 
       - name: Package
         uses: actions/upload-artifact@v4

@@ -11,11 +11,6 @@ pub fn build(b: *std.Build) void {
     const options = b.addOptions();
     options.addOption([]const u8, "version", version);
 
-    // Build for arm64.
-    crossBuild(b, options, version, target);
-}
-
-fn crossBuild(b: *std.Build, options: *std.Build.Step.Options, version: []const u8, target: std.Build.ResolvedTarget) void {
     // Compile source code.
     const compile = b.addExecutable(.{
         .name = "headcheck",

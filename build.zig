@@ -8,6 +8,13 @@ pub fn build(b: *std.Build) !void {
     const options = b.addOptions();
     options.addOption([]const u8, "version", version);
 
+    // Build for arm64.
+    try crossBuild(b, options, version, b.resolveTargetQuery(.{
+        .cpu_arch = .aarch64,
+        .cpu_model = .baseline,
+        .os_tag = .linux,
+    }));
+
     // Build for x64.
     try crossBuild(b, options, version, b.resolveTargetQuery(.{
         .cpu_arch = .x86_64,

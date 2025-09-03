@@ -65,7 +65,7 @@ fn crossBuild(b: *std.Build, options: *std.Build.Step.Options, version: []const 
 
     // Install raw output.
     const compile_output = b.addInstallArtifact(compile, .{ .dest_dir = .{ .override = .{
-        .custom = archName,
+        .custom = b.fmt("{s}_{s}", .{ @tagName(compile.rootModuleTarget().os.tag), archName }),
     } } });
     compile_output.step.dependOn(&archive.step);
 

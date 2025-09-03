@@ -13,10 +13,12 @@ jobs:
   build:
     strategy:
       matrix:
-        os:
-          - ubuntu-24.04
-          - ubuntu-24.04-arm
-    runs-on: ${{ matrix.os }}
+        include:
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+          - arch: x64
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: write
     steps:
@@ -33,7 +35,7 @@ jobs:
       - name: Package
         uses: actions/upload-artifact@v4
         with:
-          name: build
+          name: build_${{ matrix.arch }}
           path: zig-out
 
       - name: Publish

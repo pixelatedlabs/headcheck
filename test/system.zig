@@ -36,7 +36,7 @@ pub fn main() !void {
     connection.close();
 }
 
-pub fn server() !void {
+fn server() !void {
     var serverTcp = try address.listen(.{ .reuse_address = true });
     defer serverTcp.deinit();
 

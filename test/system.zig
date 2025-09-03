@@ -35,9 +35,9 @@ pub fn main() !void {
 }
 
 pub fn http(running: *std.atomic.Value(bool)) !void {
-    const address = try std.net.Address.parseIp4("127.0.0.1", 47637);
+    const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
 
-    var server = try address.listen(.{});
+    var server = try address.listen(.{ .reuse_address = true });
     defer server.deinit();
 
     while (running.load(.monotonic)) {
@@ -88,7 +88,7 @@ fn invalidUrl(allocator: std.mem.Allocator, args: Args) !void {
 fn validUrlWithSuccessfulResponse(allocator: std.mem.Allocator, args: Args) !void {
     const child = try std.process.Child.run(.{
         .allocator = allocator,
-        .argv = &[_][]const u8{ args.binary, "http://localhost:47637/200" },
+        .argv = &[_][]const u8{ args.binary, "http://localhost:47638/200" },
     });
 
     try std.testing.expectEqual(0, child.term.Exited);

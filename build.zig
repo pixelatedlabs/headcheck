@@ -48,6 +48,7 @@ pub fn build(b: *std.Build) void {
     const full = b.addInstallFile(archive_path, b.fmt("{s}_{s}.zip", .{
         @tagName(compile.rootModuleTarget().os.tag),
         switch (compile.rootModuleTarget().cpu.arch) {
+            .aarch64 => "arm64",
             .x86_64 => "x64",
             else => |a| @tagName(a),
         },
@@ -59,6 +60,7 @@ pub fn build(b: *std.Build) void {
         compile.name,
         @tagName(compile.rootModuleTarget().os.tag),
         switch (compile.rootModuleTarget().cpu.arch) {
+            .aarch64 => "arm64",
             .x86_64 => "x64",
             else => |a| @tagName(a),
         },

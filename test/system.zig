@@ -15,7 +15,7 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    var thread = try std.Thread.spawn(.{}, http, .{});
+    var thread = try std.Thread.spawn(.{}, server, .{});
     defer thread.join();
 
     const testArgs = Args{
@@ -36,7 +36,7 @@ pub fn main() !void {
     connection.close();
 }
 
-pub fn http() !void {
+pub fn server() !void {
     var serverTcp = try address.listen(.{ .reuse_address = true });
     defer serverTcp.deinit();
 

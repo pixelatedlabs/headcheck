@@ -3,6 +3,11 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
+    // Build for x64.
+    crossBuild(b);
+}
+
+fn crossBuild(b: *std.Build) void {
     // Add version option.
     const version = b.option([]const u8, "version", "version") orelse "0.0.0";
     const options = b.addOptions();

@@ -32,26 +32,25 @@ pub fn main() !void {
     try versionText(allocator, testArgs);
 
     running = false;
-    const conn = std.net.tcpConnectToAddress(address) catch return;
-    conn.close();
+    const connection = std.net.tcpConnectToAddress(address) catch return;
+    connection.close();
 }
 
 pub fn http() !void {
-    var server = try address.listen(.{ .reuse_address = true });
-    defer server.deinit();
+    var serverTcp = try address.listen(.{ .reuse_address = true });
+    defer serverTcp.deinit();
 
     while (running) {
-        var conn = try server.accept();
-        defer conn.stream.close();
+        var connection = try serverTcp.accept();
+        defer connection.stream.close();
 
         var buffer: [1024]u8 = undefined;
-        var http_server = std.http.Server.init(conn, &buffer);
-        var req = http_server.receiveHead() catch return;
-        const trimmed = std.mem.trimLeft(u8, req.head.target, "/");
-        const value = try std.fmt.parseInt(i32, trimmed, 10);
-        const status: std.http.Status = @enumFromInt(value);
+        var serverHttp = std.http.Server.init(connection, &buffer);
 
-        try req.respond("", .{ .status = status });
+        var request = serverHttp.receiveHead() catch return;
+        const trimmed = std.mem.trimLeft(u8, request.head.target, "/");
+        const value = try std.fmt.parseInt(i32, trimmed, 10);
+        try request.respond("", .{ .status = @enumFromInt(value) });
     }
 }
 

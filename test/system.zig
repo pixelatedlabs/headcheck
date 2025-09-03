@@ -32,6 +32,9 @@ pub fn main() !void {
     try versionText(allocator, testArgs);
 
     running.store(false, .release);
+    const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
+    const conn = std.net.tcpConnectToAddress(address) catch return;
+    conn.close();
 }
 
 pub fn http(running: *std.atomic.Value(bool)) !void {
@@ -46,7 +49,11 @@ pub fn http(running: *std.atomic.Value(bool)) !void {
 
         var buffer: [1024]u8 = undefined;
         var http_server = std.http.Server.init(conn, &buffer);
-        var req = try http_server.receiveHead();
+        std.debug.print("state: {s}", .{@tagName(http_server.state)});
+        if (http_server.state != .ready) {
+            return;
+        }
+        var req = http_server.receiveHead() catch return;
         const trimmed = std.mem.trimLeft(u8, req.head.target, "/");
         const value = try std.fmt.parseInt(i32, trimmed, 10);
         const status: std.http.Status = @enumFromInt(value);

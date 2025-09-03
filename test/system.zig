@@ -12,6 +12,24 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
+    const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
+
+    var server = try address.listen(.{});
+    defer server.deinit();
+
+    // while (true) {
+    var conn = try server.accept();
+    defer conn.stream.close();
+
+    // std.debug.print("{s}", conn.address);
+    var buffer: [1024]u8 = undefined;
+    var http_server = std.http.Server.init(conn, &buffer);
+    var req = try http_server.receiveHead();
+    std.debug.print("{s}\n", .{@tagName(req.head.method)});
+    std.debug.print("{s}\n", .{req.head.target});
+    try req.respond("hello world\n", std.http.Server.Request.RespondOptions{});
+    // }
+
     const testArgs = Args{
         .binary = args[1],
         .version = args[2],

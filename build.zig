@@ -3,12 +3,13 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
+    // Add target option.
+    const target = b.standardTargetOptions(.{ .default_target = b.graph.host.query });
+
     // Add version option.
     const version = b.option([]const u8, "version", "version") orelse "0.0.0";
     const options = b.addOptions();
     options.addOption([]const u8, "version", version);
-
-    const target = b.standardTargetOptions(.{ .default_target = b.graph.host.query });
 
     // Build for arm64.
     crossBuild(b, options, version, target);

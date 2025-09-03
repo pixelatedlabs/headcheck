@@ -44,22 +44,13 @@ pub fn http(running: *std.atomic.Value(bool)) !void {
         var conn = try server.accept();
         defer conn.stream.close();
 
-        // std.debug.print("{s}", conn.address);
         var buffer: [1024]u8 = undefined;
         var http_server = std.http.Server.init(conn, &buffer);
         var req = try http_server.receiveHead();
         const trimmed = std.mem.trimLeft(u8, req.head.target, "/");
-        std.debug.print("{s}\n", .{trimmed});
         const value = try std.fmt.parseInt(i32, trimmed, 10);
         const status: std.http.Status = @enumFromInt(value);
-        // const status = std.meta.stringToEnum(std.http.Status, trimmed) orelse .ok;
 
-        std.debug.print("{d}\n", .{value});
-        std.debug.print("{s}\n", .{@tagName(status)});
-
-        // std.debug.print("{s}\n", .{@tagName(req.head.method)});
-        // std.debug.print("{s}\n", .{req.head.target});
-        // std.debug.print("{s}\n", .{@tagName(status)});
         try req.respond("", .{ .status = status });
     }
 }

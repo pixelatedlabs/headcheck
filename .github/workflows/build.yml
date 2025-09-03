@@ -25,6 +25,13 @@ jobs:
           push: never
           runCmd: zig build -Dversion=${{ github.ref_name }}
 
+      - name: Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: zig-out
+          retention-days: 7
+
       - name: Publish
         if: github.event_name == 'release'
         env:

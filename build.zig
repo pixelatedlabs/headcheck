@@ -56,24 +56,23 @@ fn crossBuild(b: *std.Build, options: *std.Build.Step.Options, version: []const 
     archive.addFileArg(compile.getEmittedBin());
     archive.step.dependOn(&testing.step);
 
+    // Simplify architecture name.
+    const archName = switch (compile.rootModuleTarget().cpu.arch) {
+        .aarch64 => "arm64",
+        .x86_64 => "x64",
+        else => |a| @tagName(a),
+    };
+
     // Install raw output.
     const compile_output = b.addInstallArtifact(compile, .{ .dest_dir = .{ .override = .{
-        .custom = switch (compile.rootModuleTarget().cpu.arch) {
-            .aarch64 => "arm64",
-            .x86_64 => "x64",
-            else => |a| @tagName(a),
-        },
+        .custom = archName,
     } } });
     compile_output.step.dependOn(&archive.step);
 
     // Install full compressed output.
     const full = b.addInstallFile(archive_path, b.fmt("{s}_{s}.zip", .{
         @tagName(compile.rootModuleTarget().os.tag),
-        switch (compile.rootModuleTarget().cpu.arch) {
-            .aarch64 => "arm64",
-            .x86_64 => "x64",
-            else => |a| @tagName(a),
-        },
+        archName,
     }));
     full.step.dependOn(&compile_output.step);
 
@@ -81,11 +80,7 @@ fn crossBuild(b: *std.Build, options: *std.Build.Step.Options, version: []const 
     const short = b.addInstallFile(archive_path, b.fmt("{s}_{s}_{s}_{s}.zip", .{
         compile.name,
         @tagName(compile.rootModuleTarget().os.tag),
-        switch (compile.rootModuleTarget().cpu.arch) {
-            .aarch64 => "arm64",
-            .x86_64 => "x64",
-            else => |a| @tagName(a),
-        },
+        archName,
         version,
     }));
     short.step.dependOn(&full.step);

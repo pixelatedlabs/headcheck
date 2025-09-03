@@ -25,8 +25,18 @@ pub fn main() !void {
     var buffer: [1024]u8 = undefined;
     var http_server = std.http.Server.init(conn, &buffer);
     var req = try http_server.receiveHead();
-    std.debug.print("{s}\n", .{@tagName(req.head.method)});
-    std.debug.print("{s}\n", .{req.head.target});
+    const trimmed = std.mem.trimLeft(u8, req.head.target, "/");
+    const value = try std.fmt.parseInt(i32, trimmed, 10);
+    const status: std.http.Status = @enumFromInt(value);
+    // const status = std.meta.stringToEnum(std.http.Status, trimmed) orelse .ok;
+
+    std.debug.print("{s}\n", .{trimmed});
+    std.debug.print("{d}\n", .{value});
+    std.debug.print("{s}\n", .{@tagName(status)});
+
+    // std.debug.print("{s}\n", .{@tagName(req.head.method)});
+    // std.debug.print("{s}\n", .{req.head.target});
+    // std.debug.print("{s}\n", .{@tagName(status)});
     try req.respond("hello world\n", std.http.Server.Request.RespondOptions{});
     // }
 

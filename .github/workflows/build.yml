@@ -41,7 +41,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build_${{ matrix.arch }}
-          path: zig-out
+          path: zig-out/*.zip
 
       - name: Publish
         if: github.event_name == 'release'

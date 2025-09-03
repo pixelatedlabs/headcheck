@@ -4,10 +4,14 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) void {
     // Build for x64.
-    crossBuild(b);
+    crossBuild(b, b.resolveTargetQuery(.{
+        .cpu_arch = .x86_64,
+        .cpu_model = .native,
+        .os_tag = .linux,
+    }));
 }
 
-fn crossBuild(b: *std.Build) void {
+fn crossBuild(b: *std.Build, target: std.Build.ResolvedTarget) void {
     // Add version option.
     const version = b.option([]const u8, "version", "version") orelse "0.0.0";
     const options = b.addOptions();
@@ -21,7 +25,7 @@ fn crossBuild(b: *std.Build) void {
             .optimize = .ReleaseSmall,
             .root_source_file = b.path("src/main.zig"),
             .single_threaded = true,
-            .target = b.graph.host,
+            .target = target,
             .unwind_tables = .none,
         }),
     });

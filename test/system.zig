@@ -5,6 +5,7 @@ const std = @import("std");
 const Args = struct { binary: []u8, version: []u8 };
 
 const address = std.net.Address.initIp4([_]u8{ 127, 0, 0, 1 }, 47638);
+var running = true;
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -14,8 +15,7 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    var running = true;
-    var thread = try std.Thread.spawn(.{}, http, .{&running});
+    var thread = try std.Thread.spawn(.{}, http, .{});
     defer thread.join();
 
     const testArgs = Args{
@@ -36,11 +36,11 @@ pub fn main() !void {
     conn.close();
 }
 
-pub fn http(running: *bool) !void {
+pub fn http() !void {
     var server = try address.listen(.{ .reuse_address = true });
     defer server.deinit();
 
-    while (running.*) {
+    while (running) {
         var conn = try server.accept();
         defer conn.stream.close();
 

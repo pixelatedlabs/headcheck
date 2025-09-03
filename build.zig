@@ -16,7 +16,9 @@ pub fn build(b: *std.Build) void {
             .optimize = .ReleaseSmall,
             .root_source_file = b.path("src/main.zig"),
             .single_threaded = true,
-            .target = b.graph.host,
+            .target = b.standardTargetOptions(.{
+                .default_target = b.graph.host.query,
+            }),
             .unwind_tables = .none,
         }),
     });
@@ -40,28 +42,34 @@ pub fn build(b: *std.Build) void {
     archive.addFileArg(compile.getEmittedBin());
     archive.step.dependOn(&testing.step);
 
+    // Calculate platorm name, for example 'linux_arm64'.
+    const platform = b.fmt(
+        "{s}_{s}",
+        .{
+            @tagName(compile.rootModuleTarget().os.tag),
+            switch (compile.rootModuleTarget().cpu.arch) {
+                .aarch64 => "arm64",
+                .x86_64 => "x64",
+                else => |a| @tagName(a),
+            },
+        },
+    );
+
     // Install raw output.
-    const compile_output = b.addInstallArtifact(compile, .{});
+    const compile_output = b.addInstallArtifact(
+        compile,
+        .{ .dest_dir = .{ .override = .{ .custom = platform } } },
+    );
     compile_output.step.dependOn(&archive.step);
 
     // Install full compressed output.
-    const full = b.addInstallFile(archive_path, b.fmt("{s}_{s}.zip", .{
-        @tagName(compile.rootModuleTarget().os.tag),
-        switch (compile.rootModuleTarget().cpu.arch) {
-            .x86_64 => "x64",
-            else => |a| @tagName(a),
-        },
-    }));
+    const full = b.addInstallFile(archive_path, b.fmt("{s}.zip", .{platform}));
     full.step.dependOn(&compile_output.step);
 
     // Install short compressed output.
-    const short = b.addInstallFile(archive_path, b.fmt("{s}_{s}_{s}_{s}.zip", .{
+    const short = b.addInstallFile(archive_path, b.fmt("{s}_{s}_{s}.zip", .{
         compile.name,
-        @tagName(compile.rootModuleTarget().os.tag),
-        switch (compile.rootModuleTarget().cpu.arch) {
-            .x86_64 => "x64",
-            else => |a| @tagName(a),
-        },
+        platform,
         version,
     }));
     short.step.dependOn(&full.step);

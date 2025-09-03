@@ -34,8 +34,7 @@ pub fn main() !void {
 }
 
 pub fn http(running: *std.atomic.Value(bool)) !void {
-    // const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
-    const address = try std.net.Address.parseIp4("127.0.0.1", 10006);
+    const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
 
     var server = try address.listen(.{});
     defer server.deinit();

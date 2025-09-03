@@ -15,8 +15,6 @@ pub fn main() !void {
     var running = true;
     var thread = try std.Thread.spawn(.{}, http, .{&running});
     defer thread.join();
-    // try http();
-    // std.Thread.sleep(500000);
 
     const testArgs = Args{
         .binary = args[1],

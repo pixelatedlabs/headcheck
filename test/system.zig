@@ -4,6 +4,8 @@ const std = @import("std");
 
 const Args = struct { binary: []u8, version: []u8 };
 
+const address = std.net.Address.initIp4([_]u8{ 127, 0, 0, 1 }, 47638);
+
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     const allocator = arena.allocator();
@@ -30,14 +32,11 @@ pub fn main() !void {
     try versionText(allocator, testArgs);
 
     running = false;
-    const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
     const conn = std.net.tcpConnectToAddress(address) catch return;
     conn.close();
 }
 
 pub fn http(running: *bool) !void {
-    const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
-
     var server = try address.listen(.{ .reuse_address = true });
     defer server.deinit();
 

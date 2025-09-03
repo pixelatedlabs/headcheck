@@ -3,9 +3,6 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    // Add target option.
-    const target = b.standardTargetOptions(.{ .default_target = b.graph.host.query });
-
     // Add version option.
     const version = b.option([]const u8, "version", "version") orelse "0.0.0";
     const options = b.addOptions();
@@ -19,7 +16,9 @@ pub fn build(b: *std.Build) void {
             .optimize = .ReleaseSmall,
             .root_source_file = b.path("src/main.zig"),
             .single_threaded = true,
-            .target = target,
+            .target = b.standardTargetOptions(.{
+                .default_target = b.graph.host.query,
+            }),
             .unwind_tables = .none,
         }),
     });

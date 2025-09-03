@@ -98,7 +98,7 @@ fn validUrlWithSuccessfulResponse(allocator: std.mem.Allocator, args: Args) !voi
 fn validUrlWithUnsuccessfulResponse(allocator: std.mem.Allocator, args: Args) !void {
     const child = try std.process.Child.run(.{
         .allocator = allocator,
-        .argv = &[_][]const u8{ args.binary, "http://google.com" },
+        .argv = &[_][]const u8{ args.binary, "http://localhost:47638/301" },
     });
 
     try std.testing.expectEqual(1, child.term.Exited);

@@ -12,7 +12,7 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    var running = std.atomic.Value(bool).init(true);
+    var running = true;
     var thread = try std.Thread.spawn(.{}, http, .{&running});
     defer thread.join();
     // try http();
@@ -31,28 +31,24 @@ pub fn main() !void {
     try helpText(allocator, testArgs);
     try versionText(allocator, testArgs);
 
-    running.store(false, .release);
+    running = false;
     const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
     const conn = std.net.tcpConnectToAddress(address) catch return;
     conn.close();
 }
 
-pub fn http(running: *std.atomic.Value(bool)) !void {
+pub fn http(running: *bool) !void {
     const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
 
     var server = try address.listen(.{ .reuse_address = true });
     defer server.deinit();
 
-    while (running.load(.monotonic)) {
+    while (running.*) {
         var conn = try server.accept();
         defer conn.stream.close();
 
         var buffer: [1024]u8 = undefined;
         var http_server = std.http.Server.init(conn, &buffer);
-        std.debug.print("state: {s}", .{@tagName(http_server.state)});
-        if (http_server.state != .ready) {
-            return;
-        }
         var req = http_server.receiveHead() catch return;
         const trimmed = std.mem.trimLeft(u8, req.head.target, "/");
         const value = try std.fmt.parseInt(i32, trimmed, 10);

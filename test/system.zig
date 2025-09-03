@@ -12,7 +12,10 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    try http();
+    _ = try std.Thread.spawn(.{}, http, .{});
+    // try http();
+
+    std.Thread.sleep(10000000000000000);
 
     const testArgs = Args{
         .binary = args[1],
@@ -30,7 +33,7 @@ pub fn main() !void {
 
 pub fn http() !void {
     // const address = try std.net.Address.parseIp4("127.0.0.1", 47638);
-    const address = try std.net.Address.parseIp4("127.0.0.1", 10003);
+    const address = try std.net.Address.parseIp4("127.0.0.1", 10006);
 
     var server = try address.listen(.{});
     defer server.deinit();
@@ -44,11 +47,11 @@ pub fn http() !void {
         var http_server = std.http.Server.init(conn, &buffer);
         var req = try http_server.receiveHead();
         const trimmed = std.mem.trimLeft(u8, req.head.target, "/");
+        std.debug.print("{s}\n", .{trimmed});
         const value = try std.fmt.parseInt(i32, trimmed, 10);
         const status: std.http.Status = @enumFromInt(value);
         // const status = std.meta.stringToEnum(std.http.Status, trimmed) orelse .ok;
 
-        std.debug.print("{s}\n", .{trimmed});
         std.debug.print("{d}\n", .{value});
         std.debug.print("{s}\n", .{@tagName(status)});
 

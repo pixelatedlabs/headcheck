@@ -11,7 +11,14 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+          - arch: x64
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: write
     steps:
@@ -24,6 +31,12 @@ jobs:
         with:
           push: never
           runCmd: zig build -Dversion=${{ github.ref_name }}
+
+      - name: Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: build_${{ matrix.arch }}
+          path: zig-out
 
       - name: Publish
         if: github.event_name == 'release'

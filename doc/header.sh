@@ -15,6 +15,6 @@ EOF
 
 echo "$CODE" | freeze --language fish --output $FILE --padding 20,200,0,30
 
-magick $FILE -resize 1270x $FILE
+magick $FILE -resize 1280x $FILE
 
 optipng $FILE

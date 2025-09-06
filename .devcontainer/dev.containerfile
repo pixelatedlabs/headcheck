@@ -2,4 +2,12 @@
 
 FROM quay.io/fedora/fedora:42
 
-RUN dnf --assumeyes --setopt=install_weak_deps=false install git upx zig zip
+ARG FREEZE=0.2.2
+
+RUN <<EOF
+	ARCH=$(uname -m)
+
+	dnf --assumeyes --setopt=install_weak_deps=false install \
+		git ImageMagick optipng upx zig zip \
+		https://github.com/charmbracelet/freeze/releases/download/v$FREEZE/freeze-$FREEZE-1.$ARCH.rpm
+EOF

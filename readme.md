@@ -1,10 +1,6 @@
 <!-- This is free and unencumbered software released into the public domain. -->
 
-# Headcheck
-
-```ruby
-headcheck http://localhost:8080
-```
+![Headcheck](doc/header.png)
 
 Headcheck is a CLI program which performs a `HEAD` request to a given URL. It returns `0` if the
 request was successful or `1` if it was not.

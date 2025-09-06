@@ -1,6 +1,8 @@
-ROOT=$(dirname $BASH_SOURCE[0])
+DIR=$(dirname $BASH_SOURCE[0])
 
-freeze $ROOT/header.sh \
+freeze $DIR/header.sh \
 	--language fish \
-	--output $ROOT/header.png \
+	--output $DIR/header.png \
 	--padding 20,200,0,30
+
+magick $DIR/header.png -resize 1270x $DIR/header.png

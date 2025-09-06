@@ -1,6 +1,6 @@
 # This is free and unencumbered software released into the public domain.
 
-DIR=$(dirname $BASH_SOURCE[0])
+FILE="$(dirname $BASH_SOURCE[0])/header.png"
 
 read -r -d '' CODE <<-'EOF'
 	#  _                    _      _               _
@@ -13,8 +13,8 @@ read -r -d '' CODE <<-'EOF'
 	headcheck http://localhost/status
 EOF
 
-echo "$CODE" | freeze --language fish --output $DIR/header.png --padding 20,200,0,30
+echo "$CODE" | freeze --language fish --output $FILE --padding 20,200,0,30
 
-magick $DIR/header.png -resize 1270x $DIR/header.png
+magick $FILE -resize 1270x $FILE
 
-optipng $DIR/header.png
+optipng $FILE

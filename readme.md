@@ -2,6 +2,13 @@
 
 ![Headcheck](doc/header.png)
 
+<div style='display: flex; justify-content: space-between; max-width: 1280px'>
+	<img alt='Release' src='https://img.shields.io/github/v/release/pixelatedlabs/headcheck?color=black&style=for-the-badge'>
+	<img alt='License' src='https://img.shields.io/github/license/pixelatedlabs/headcheck?color=black&style=for-the-badge'>
+	<img alt='Language' src='https://img.shields.io/github/languages/top/pixelatedlabs/headcheck?color=black&style=for-the-badge'>
+</div>
+<br>
+
 Headcheck is a CLI program which performs a `HEAD` request to a given URL. It returns `0` if the
 request was successful or `1` if it was not.
 

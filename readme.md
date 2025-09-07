@@ -3,11 +3,17 @@
 ![Headcheck](doc/header.png)
 
 <div align=center>
-	<img alt=Release src=https://img.shields.io/github/v/release/pixelatedlabs/headcheck?color=black&style=for-the-badge>
+	<a href=https://github.com/pixelatedlabs/headcheck/releases/latest>
+		<img alt=Release src=https://img.shields.io/github/v/release/pixelatedlabs/headcheck?color=black&style=for-the-badge>
+	</a>
 	&nbsp;
-	<img alt=License src=https://img.shields.io/github/license/pixelatedlabs/headcheck?color=black&style=for-the-badge>
+	<a href=https://github.com/pixelatedlabs/headcheck/blob/master/license.txt>
+		<img alt=License src=https://img.shields.io/github/license/pixelatedlabs/headcheck?color=black&style=for-the-badge>
+	</a>
 	&nbsp;
-	<img alt=Language src=https://img.shields.io/github/languages/top/pixelatedlabs/headcheck?color=black&style=for-the-badge>
+	<a href=https://ziglang.org>
+		<img alt=Language src=https://img.shields.io/github/languages/top/pixelatedlabs/headcheck?color=black&style=for-the-badge>
+	</a>
 </div>
 <br>
 

@@ -37,22 +37,22 @@ pub fn main() !void {
 }
 
 fn server() !void {
-    var serverTcp = try address.listen(.{ .reuse_address = true });
-    defer serverTcp.deinit();
+    var server_tcp = try address.listen(.{ .reuse_address = true });
+    defer server_tcp.deinit();
 
     while (running) {
-        var connection = try serverTcp.accept();
+        var connection = try server_tcp.accept();
         defer connection.stream.close();
 
         var read_buffer: [1024]u8 = undefined;
+        var read_http = connection.stream.reader(&read_buffer);
+
         var write_buffer: [1024]u8 = undefined;
+        var write_http = connection.stream.writer(&write_buffer);
 
-        var http_reader = connection.stream.reader(&read_buffer);
-        var http_writer = connection.stream.writer(&write_buffer);
+        var server_http = std.http.Server.init(read_http.interface(), &write_http.interface);
 
-        var serverHttp = std.http.Server.init(http_reader.interface(), &http_writer.interface);
-
-        var request = serverHttp.receiveHead() catch return;
+        var request = server_http.receiveHead() catch return;
         const trimmed = std.mem.trimLeft(u8, request.head.target, "/");
         const value = try std.fmt.parseInt(i32, trimmed, 10);
         try request.respond("", .{ .status = @enumFromInt(value) });

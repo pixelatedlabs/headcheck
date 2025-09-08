@@ -23,6 +23,7 @@ pub fn build(b: *std.Build) void {
         }),
     });
     compile.root_module.addOptions("config", options);
+    b.installArtifact(compile);
 
     // Compress executable using UPX.
     const compress = b.addSystemCommand(&.{ "upx", "--lzma", "-9" });
@@ -73,5 +74,8 @@ pub fn build(b: *std.Build) void {
         version,
     }));
     short.step.dependOn(&full.step);
-    b.getInstallStep().dependOn(&short.step);
+
+    // Setup package step.
+    var package = b.step("package", "Package the executable");
+    package.dependOn(&short.step);
 }

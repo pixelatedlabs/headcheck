@@ -4,31 +4,31 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) void {
     const options, const version = generateOptions(b);
-    const debug = compileDebug(b, options);
-    const command = artifactRun(b, debug);
-    const release = compileRelease(b, options);
-    const upx = compressUpx(b, release.getEmittedBin());
-    const testing = testSystem(b, release.getEmittedBin(), version);
-    const zip, const zip_output = compressZip(b, release.getEmittedBin());
-    const compile_output = artifactInstall(b, release);
-    const full = installShort(b, release.rootModuleTarget(), zip_output);
-    const short = installLong(b, release, zip_output, version);
-    const main = b.addInstallArtifact(debug, .{});
+    const compile_debug = compileDebug(b, options);
+    const compile_release = compileRelease(b, options);
+    const compress_upx = compressUpx(b, compile_release.getEmittedBin());
+    const compress_zip, const zip_output = compressZip(b, compile_release.getEmittedBin());
+    const test_system = testSystem(b, compile_release.getEmittedBin(), version);
+    const artifact_debug = b.addInstallArtifact(compile_debug, .{});
+    const artifact_full = artifactFull(b, compile_release, zip_output, version);
+    const artifact_short = artifactShort(b, compile_release.rootModuleTarget(), zip_output);
+    const artifact_release = artifactInstall(b, compile_release);
+    const artifact_run = artifactRun(b, compile_debug);
 
-    const default = b.getInstallStep();
-    default.dependOn(&main.step);
+    const option_install = b.getInstallStep();
+    option_install.dependOn(&artifact_debug.step);
 
-    const package = b.step("release", "Package for publishing");
-    upx.step.dependOn(&release.step);
-    testing.step.dependOn(&upx.step);
-    zip.step.dependOn(&testing.step);
-    compile_output.step.dependOn(&zip.step);
-    full.step.dependOn(&compile_output.step);
-    short.step.dependOn(&full.step);
-    package.dependOn(&short.step);
+    const option_package = b.step("release", "Package for publishing");
+    compress_upx.step.dependOn(&compile_release.step);
+    test_system.step.dependOn(&compress_upx.step);
+    compress_zip.step.dependOn(&test_system.step);
+    artifact_release.step.dependOn(&compress_zip.step);
+    artifact_full.step.dependOn(&artifact_release.step);
+    artifact_short.step.dependOn(&artifact_full.step);
+    option_package.dependOn(&artifact_short.step);
 
-    const runCommand = b.step("run", "Run the application");
-    runCommand.dependOn(&command.step);
+    const option_run = b.step("run", "Run the application");
+    option_run.dependOn(&artifact_run.step);
 }
 
 fn artifactRun(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.Run {
@@ -105,11 +105,11 @@ fn compressZip(b: *std.Build, bin: std.Build.LazyPath) struct { *std.Build.Step.
     return .{ command, output };
 }
 
-fn installShort(b: *std.Build, target: std.Target, file: std.Build.LazyPath) *std.Build.Step.InstallFile {
+fn artifactShort(b: *std.Build, target: std.Target, file: std.Build.LazyPath) *std.Build.Step.InstallFile {
     return b.addInstallFile(file, b.fmt("{s}.zip", .{platform(b, target)}));
 }
 
-fn installLong(b: *std.Build, compile: *std.Build.Step.Compile, file: std.Build.LazyPath, version: []const u8) *std.Build.Step.InstallFile {
+fn artifactFull(b: *std.Build, compile: *std.Build.Step.Compile, file: std.Build.LazyPath, version: []const u8) *std.Build.Step.InstallFile {
     return b.addInstallFile(file, b.fmt("{s}_{s}_{s}.zip", .{
         compile.name,
         platform(b, compile.rootModuleTarget()),

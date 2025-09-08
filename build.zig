@@ -8,11 +8,7 @@ pub fn build(b: *std.Build) void {
     const debug = wip_compileDebug(b, options);
     b.installArtifact(debug);
 
-    const command = b.addRunArtifact(debug);
-    if (b.args) |args| {
-        command.addArgs(args);
-    }
-
+    const command = wip_run(b, debug);
     const release = wip_compileRelease(b, options);
     const upx = wip_upx(b, release.getEmittedBin());
     const testing = wip_test(b, release.getEmittedBin(), version);
@@ -35,6 +31,14 @@ pub fn build(b: *std.Build) void {
 
     const run = b.step("run", "Run the application");
     run.dependOn(&command.step);
+}
+
+fn wip_run(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.Run {
+    const command = b.addRunArtifact(compile);
+    if (b.args) |args| {
+        command.addArgs(args);
+    }
+    return command;
 }
 
 fn wip_generateOptions(b: *std.Build) struct { *std.Build.Step.Options, []const u8 } {

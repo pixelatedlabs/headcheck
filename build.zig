@@ -18,28 +18,13 @@ pub fn build(b: *std.Build) void {
 
 fn buildDebug(b: *std.Build, options: *std.Build.Step.Options) void {
     // Compile source code in debug mode.
-    const debug = b.addExecutable(.{
-        .name = "headcheck",
-        .root_module = b.createModule(.{
-            .optimize = .Debug,
-            .root_source_file = b.path("src/main.zig"),
-            .target = b.graph.host,
-        }),
-    });
-    debug.root_module.addOptions("config", options);
+    const debug = wip_compileDebug(b, options);
     b.installArtifact(debug);
 }
 
 fn buildRun(b: *std.Build, options: *std.Build.Step.Options) void {
     // Compile source code in standard mode.
-    const compile = b.addExecutable(.{
-        .name = "headcheck",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/main.zig"),
-            .target = b.graph.host,
-        }),
-    });
-    compile.root_module.addOptions("config", options);
+    const compile = wip_compileDebug(b, options);
     b.installArtifact(compile);
 
     const command = b.addRunArtifact(compile);
@@ -52,39 +37,14 @@ fn buildRun(b: *std.Build, options: *std.Build.Step.Options) void {
 }
 
 fn buildRelease(b: *std.Build, options: *std.Build.Step.Options, version: []const u8) void {
-    // Compile source code in release mode.
-    const release = b.addExecutable(.{
-        .name = "headcheck",
-        .root_module = b.createModule(.{
-            .omit_frame_pointer = true,
-            .optimize = .ReleaseSmall,
-            .root_source_file = b.path("src/main.zig"),
-            .single_threaded = true,
-            .target = b.standardTargetOptions(.{
-                .default_target = b.graph.host.query,
-            }),
-            .unwind_tables = .none,
-        }),
-    });
-    release.root_module.addOptions("config", options);
+    const release = wip_compileRelease(b, options);
+    const upx = wip_upx(b, release.getEmittedBin());
+    const testing = wip_test(b, release.getEmittedBin(), version);
+    const zip = wip_zip(b, release.getEmittedBin());
 
-    // Compress executable using UPX.
-    const compress = b.addSystemCommand(&.{ "upx", "--lzma", "-9" });
-    compress.stdio = .{ .check = .{} };
-    compress.addFileArg(release.getEmittedBin());
-    compress.step.dependOn(&release.step);
-
-    // Run system tests.
-    const testing = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
-    testing.addFileArg(release.getEmittedBin());
-    testing.addArg(version);
-    testing.step.dependOn(&compress.step);
-
-    // Add executable to ZIP archive.
-    const archive = b.addSystemCommand(&.{ "zip", "--junk-paths" });
-    const archive_path = archive.addOutputFileArg("headcheck.zip");
-    archive.addFileArg(release.getEmittedBin());
-    archive.step.dependOn(&testing.step);
+    upx.step.dependOn(&release.step);
+    testing.step.dependOn(&upx.step);
+    zip.step.dependOn(&testing.step);
 
     // Calculate platorm name, for example 'linux_arm64'.
     const platform = b.fmt(
@@ -104,9 +64,10 @@ fn buildRelease(b: *std.Build, options: *std.Build.Step.Options, version: []cons
         release,
         .{ .dest_dir = .{ .override = .{ .custom = platform } } },
     );
-    compile_output.step.dependOn(&archive.step);
+    compile_output.step.dependOn(&zip.step);
 
     // Install full compressed output.
+    const archive_path = zip.addOutputFileArg("headcheck.zip");
     const full = b.addInstallFile(archive_path, b.fmt("{s}.zip", .{platform}));
     full.step.dependOn(&compile_output.step);
 
@@ -121,4 +82,55 @@ fn buildRelease(b: *std.Build, options: *std.Build.Step.Options, version: []cons
     // Setup package step.
     var package = b.step("release", "Package for publishing");
     package.dependOn(&short.step);
+}
+
+fn wip_compileDebug(b: *std.Build, options: *std.Build.Step.Options) *std.Build.Step.Compile {
+    const compile = b.addExecutable(.{
+        .name = "headcheck",
+        .root_module = b.createModule(.{
+            .optimize = .Debug,
+            .root_source_file = b.path("src/main.zig"),
+            .target = b.graph.host,
+        }),
+    });
+    compile.root_module.addOptions("config", options);
+    return compile;
+}
+
+fn wip_compileRelease(b: *std.Build, options: *std.Build.Step.Options) *std.Build.Step.Compile {
+    const compile = b.addExecutable(.{
+        .name = "headcheck",
+        .root_module = b.createModule(.{
+            .omit_frame_pointer = true,
+            .optimize = .ReleaseSmall,
+            .root_source_file = b.path("src/main.zig"),
+            .single_threaded = true,
+            .target = b.standardTargetOptions(.{
+                .default_target = b.graph.host.query,
+            }),
+            .unwind_tables = .none,
+        }),
+    });
+    compile.root_module.addOptions("config", options);
+    return compile;
+}
+
+fn wip_upx(b: *std.Build, bin: std.Build.LazyPath) *std.Build.Step.Run {
+    const compress = b.addSystemCommand(&.{ "upx", "--lzma", "-9" });
+    compress.stdio = .{ .check = .{} };
+    compress.addFileArg(bin);
+    return compress;
+}
+
+fn wip_test(b: *std.Build, bin: std.Build.LazyPath, version: []const u8) *std.Build.Step.Run {
+    const testing = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
+    testing.addFileArg(bin);
+    testing.addArg(version);
+    return testing;
+}
+
+fn wip_zip(b: *std.Build, bin: std.Build.LazyPath) *std.Build.Step.Run {
+    const archive = b.addSystemCommand(&.{ "zip", "--junk-paths" });
+    archive.addFileArg(bin);
+    return archive;
 }

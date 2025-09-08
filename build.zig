@@ -12,6 +12,7 @@ pub fn build(b: *std.Build) void {
 
     // Specify release modes.
     buildDebug(b, options);
+    buildRun(b, options);
     buildRelease(b, options, version);
 }
 
@@ -27,6 +28,27 @@ fn buildDebug(b: *std.Build, options: *std.Build.Step.Options) void {
     });
     debug.root_module.addOptions("config", options);
     b.installArtifact(debug);
+}
+
+fn buildRun(b: *std.Build, options: *std.Build.Step.Options) void {
+    // Compile source code in standard mode.
+    const compile = b.addExecutable(.{
+        .name = "headcheck",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/main.zig"),
+            .target = b.graph.host,
+        }),
+    });
+    compile.root_module.addOptions("config", options);
+    b.installArtifact(compile);
+
+    const command = b.addRunArtifact(compile);
+    if (b.args) |args| {
+        command.addArgs(args);
+    }
+
+    const run = b.step("run", "Run the application");
+    run.dependOn(&command.step);
 }
 
 fn buildRelease(b: *std.Build, options: *std.Build.Step.Options, version: []const u8) void {

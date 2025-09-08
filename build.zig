@@ -31,26 +31,31 @@ pub fn build(b: *std.Build) void {
     option_run.dependOn(&artifact_run.step);
 }
 
+fn artifactFull(b: *std.Build, compile: *std.Build.Step.Compile, file: std.Build.LazyPath, version: []const u8) *std.Build.Step.InstallFile {
+    return b.addInstallFile(file, b.fmt("{s}_{s}_{s}.zip", .{
+        compile.name,
+        utilityPlatform(b, compile.rootModuleTarget()),
+        version,
+    }));
+}
+
+fn artifactInstall(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.InstallArtifact {
+    return b.addInstallArtifact(
+        compile,
+        .{ .dest_dir = .{ .override = .{ .custom = utilityPlatform(b, compile.rootModuleTarget()) } } },
+    );
+}
+
+fn artifactShort(b: *std.Build, target: std.Target, file: std.Build.LazyPath) *std.Build.Step.InstallFile {
+    return b.addInstallFile(file, b.fmt("{s}.zip", .{utilityPlatform(b, target)}));
+}
+
 fn artifactRun(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.Run {
     const command = b.addRunArtifact(compile);
     if (b.args) |args| {
         command.addArgs(args);
     }
     return command;
-}
-
-fn artifactInstall(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.InstallArtifact {
-    return b.addInstallArtifact(
-        compile,
-        .{ .dest_dir = .{ .override = .{ .custom = platform(b, compile.rootModuleTarget()) } } },
-    );
-}
-
-fn generateOptions(b: *std.Build) struct { *std.Build.Step.Options, []const u8 } {
-    const options = b.addOptions();
-    const version = b.option([]const u8, "version", "version") orelse "0.0.0";
-    options.addOption([]const u8, "version", version);
-    return .{ options, version };
 }
 
 fn compileDebug(b: *std.Build, options: *std.Build.Step.Options) *std.Build.Step.Compile {
@@ -91,13 +96,6 @@ fn compressUpx(b: *std.Build, bin: std.Build.LazyPath) *std.Build.Step.Run {
     return compress;
 }
 
-fn testSystem(b: *std.Build, bin: std.Build.LazyPath, version: []const u8) *std.Build.Step.Run {
-    const testing = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
-    testing.addFileArg(bin);
-    testing.addArg(version);
-    return testing;
-}
-
 fn compressZip(b: *std.Build, bin: std.Build.LazyPath) struct { *std.Build.Step.Run, std.Build.LazyPath } {
     const command = b.addSystemCommand(&.{ "zip", "--junk-paths" });
     command.addFileArg(bin);
@@ -105,19 +103,21 @@ fn compressZip(b: *std.Build, bin: std.Build.LazyPath) struct { *std.Build.Step.
     return .{ command, output };
 }
 
-fn artifactShort(b: *std.Build, target: std.Target, file: std.Build.LazyPath) *std.Build.Step.InstallFile {
-    return b.addInstallFile(file, b.fmt("{s}.zip", .{platform(b, target)}));
+fn generateOptions(b: *std.Build) struct { *std.Build.Step.Options, []const u8 } {
+    const options = b.addOptions();
+    const version = b.option([]const u8, "version", "version") orelse "0.0.0";
+    options.addOption([]const u8, "version", version);
+    return .{ options, version };
 }
 
-fn artifactFull(b: *std.Build, compile: *std.Build.Step.Compile, file: std.Build.LazyPath, version: []const u8) *std.Build.Step.InstallFile {
-    return b.addInstallFile(file, b.fmt("{s}_{s}_{s}.zip", .{
-        compile.name,
-        platform(b, compile.rootModuleTarget()),
-        version,
-    }));
+fn testSystem(b: *std.Build, bin: std.Build.LazyPath, version: []const u8) *std.Build.Step.Run {
+    const testing = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
+    testing.addFileArg(bin);
+    testing.addArg(version);
+    return testing;
 }
 
-fn platform(b: *std.Build, target: std.Target) []u8 {
+fn utilityPlatform(b: *std.Build, target: std.Target) []u8 {
     return b.fmt(
         "{s}_{s}",
         .{

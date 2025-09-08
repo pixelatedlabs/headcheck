@@ -40,10 +40,13 @@ fn artifactFull(b: *std.Build, compile: *std.Build.Step.Compile, file: std.Build
 }
 
 fn artifactInstall(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.InstallArtifact {
-    return b.addInstallArtifact(
-        compile,
-        .{ .dest_dir = .{ .override = .{ .custom = utilityPlatform(b, compile.rootModuleTarget()) } } },
-    );
+    return b.addInstallArtifact(compile, .{
+        .dest_dir = .{
+            .override = .{
+                .custom = utilityPlatform(b, compile.rootModuleTarget()),
+            },
+        },
+    });
 }
 
 fn artifactShort(b: *std.Build, target: std.Target, file: std.Build.LazyPath) *std.Build.Step.InstallFile {

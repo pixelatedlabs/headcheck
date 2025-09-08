@@ -50,7 +50,7 @@ pub fn main() !void {
     print("success: {d}\n", .{status});
 }
 
-var stdOut = std.fs.File.Writer.initStreaming(std.fs.File.stdout(), &.{});
+var out = std.fs.File.Writer.initStreaming(std.fs.File.stdout(), &.{});
 fn print(comptime fmt: []const u8, args: anytype) void {
-    stdOut.interface.print(fmt, args) catch return;
+    out.interface.print(fmt, args) catch return;
 }

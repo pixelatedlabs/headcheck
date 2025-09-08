@@ -3,12 +3,7 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    // Configure build options.
-    const version = b.option([]const u8, "version", "version") orelse "0.0.0";
-
-    // Add build options.
-    const options = b.addOptions();
-    options.addOption([]const u8, "version", version);
+    const options, const version = wip_generateOptions(b);
 
     const debug = wip_compileDebug(b, options);
     b.installArtifact(debug);
@@ -40,6 +35,13 @@ pub fn build(b: *std.Build) void {
 
     const run = b.step("run", "Run the application");
     run.dependOn(&command.step);
+}
+
+fn wip_generateOptions(b: *std.Build) struct { *std.Build.Step.Options, []const u8 } {
+    const options = b.addOptions();
+    const version = b.option([]const u8, "version", "version") orelse "0.0.0";
+    options.addOption([]const u8, "version", version);
+    return .{ options, version };
 }
 
 fn wip_compileDebug(b: *std.Build, options: *std.Build.Step.Options) *std.Build.Step.Compile {

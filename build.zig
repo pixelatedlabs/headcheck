@@ -67,11 +67,11 @@ fn buildRelease(b: *std.Build, options: *std.Build.Step.Options, version: []cons
     compile_output.step.dependOn(&zip.step);
 
     // Install full compressed output.
-    const full = wip_installFull(b, release.rootModuleTarget(), zip_output);
+    const full = wip_installShort(b, release.rootModuleTarget(), zip_output);
     full.step.dependOn(&compile_output.step);
 
     // Install short compressed output.
-    const short = wip_installShort(b, release, zip_output, version);
+    const short = wip_installLong(b, release, zip_output, version);
     short.step.dependOn(&full.step);
 
     // Setup package step.
@@ -131,11 +131,11 @@ fn wip_zip(b: *std.Build, bin: std.Build.LazyPath) struct { *std.Build.Step.Run,
     return .{ command, output };
 }
 
-fn wip_installFull(b: *std.Build, target: std.Target, file: std.Build.LazyPath) *std.Build.Step.InstallFile {
+fn wip_installShort(b: *std.Build, target: std.Target, file: std.Build.LazyPath) *std.Build.Step.InstallFile {
     return b.addInstallFile(file, b.fmt("{s}.zip", .{wip_platform(b, target)}));
 }
 
-fn wip_installShort(b: *std.Build, compile: *std.Build.Step.Compile, file: std.Build.LazyPath, version: []const u8) *std.Build.Step.InstallFile {
+fn wip_installLong(b: *std.Build, compile: *std.Build.Step.Compile, file: std.Build.LazyPath, version: []const u8) *std.Build.Step.InstallFile {
     return b.addInstallFile(file, b.fmt("{s}_{s}_{s}.zip", .{
         compile.name,
         wip_platform(b, compile.rootModuleTarget()),

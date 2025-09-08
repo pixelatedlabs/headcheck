@@ -101,8 +101,8 @@ fn compressUpx(b: *std.Build, bin: std.Build.LazyPath) *std.Build.Step.Run {
 
 fn compressZip(b: *std.Build, bin: std.Build.LazyPath) struct { *std.Build.Step.Run, std.Build.LazyPath } {
     const command = b.addSystemCommand(&.{ "zip", "--junk-paths" });
-    command.addFileArg(bin);
     const output = command.addOutputFileArg("headcheck.zip");
+    command.addFileArg(bin);
     return .{ command, output };
 }
 

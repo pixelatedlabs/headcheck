@@ -10,20 +10,6 @@ pub fn build(b: *std.Build) void {
     const options = b.addOptions();
     options.addOption([]const u8, "version", version);
 
-    // Specify release modes.
-    buildDebug(b, options);
-    buildRun(b, options);
-    buildRelease(b, options, version);
-}
-
-fn buildDebug(b: *std.Build, options: *std.Build.Step.Options) void {
-    // Compile source code in debug mode.
-    const debug = wip_compileDebug(b, options);
-    b.installArtifact(debug);
-}
-
-fn buildRun(b: *std.Build, options: *std.Build.Step.Options) void {
-    // Compile source code in standard mode.
     const compile = wip_compileDebug(b, options);
     b.installArtifact(compile);
 
@@ -34,9 +20,10 @@ fn buildRun(b: *std.Build, options: *std.Build.Step.Options) void {
 
     const run = b.step("run", "Run the application");
     run.dependOn(&command.step);
-}
 
-fn buildRelease(b: *std.Build, options: *std.Build.Step.Options, version: []const u8) void {
+    const debug = wip_compileDebug(b, options);
+    b.installArtifact(debug);
+
     const release = wip_compileRelease(b, options);
     const upx = wip_upx(b, release.getEmittedBin());
     const testing = wip_test(b, release.getEmittedBin(), version);

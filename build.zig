@@ -8,8 +8,20 @@ pub fn build(b: *std.Build) void {
     const options = b.addOptions();
     options.addOption([]const u8, "version", version);
 
-    // Compile source code.
-    const compile = b.addExecutable(.{
+    // Compile source code in debug mode.
+    const debug = b.addExecutable(.{
+        .name = "headcheck",
+        .root_module = b.createModule(.{
+            .optimize = .Debug,
+            .root_source_file = b.path("src/main.zig"),
+            .target = b.graph.host,
+        }),
+    });
+    debug.root_module.addOptions("config", options);
+    b.installArtifact(debug);
+
+    // Compile source code in release mode.
+    const release = b.addExecutable(.{
         .name = "headcheck",
         .root_module = b.createModule(.{
             .omit_frame_pointer = true,
@@ -22,33 +34,32 @@ pub fn build(b: *std.Build) void {
             .unwind_tables = .none,
         }),
     });
-    compile.root_module.addOptions("config", options);
-    b.installArtifact(compile);
+    release.root_module.addOptions("config", options);
 
     // Compress executable using UPX.
     const compress = b.addSystemCommand(&.{ "upx", "--lzma", "-9" });
     compress.stdio = .{ .check = .{} };
-    compress.addFileArg(compile.getEmittedBin());
-    compress.step.dependOn(&compile.step);
+    compress.addFileArg(release.getEmittedBin());
+    compress.step.dependOn(&release.step);
 
     // Run system tests.
     const testing = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
-    testing.addFileArg(compile.getEmittedBin());
+    testing.addFileArg(release.getEmittedBin());
     testing.addArg(version);
     testing.step.dependOn(&compress.step);
 
     // Add executable to ZIP archive.
     const archive = b.addSystemCommand(&.{ "zip", "--junk-paths" });
     const archive_path = archive.addOutputFileArg("headcheck.zip");
-    archive.addFileArg(compile.getEmittedBin());
+    archive.addFileArg(release.getEmittedBin());
     archive.step.dependOn(&testing.step);
 
     // Calculate platorm name, for example 'linux_arm64'.
     const platform = b.fmt(
         "{s}_{s}",
         .{
-            @tagName(compile.rootModuleTarget().os.tag),
-            switch (compile.rootModuleTarget().cpu.arch) {
+            @tagName(release.rootModuleTarget().os.tag),
+            switch (release.rootModuleTarget().cpu.arch) {
                 .aarch64 => "arm64",
                 .x86_64 => "x64",
                 else => |a| @tagName(a),
@@ -58,7 +69,7 @@ pub fn build(b: *std.Build) void {
 
     // Install raw output.
     const compile_output = b.addInstallArtifact(
-        compile,
+        release,
         .{ .dest_dir = .{ .override = .{ .custom = platform } } },
     );
     compile_output.step.dependOn(&archive.step);
@@ -69,7 +80,7 @@ pub fn build(b: *std.Build) void {
 
     // Install short compressed output.
     const short = b.addInstallFile(archive_path, b.fmt("{s}_{s}_{s}.zip", .{
-        compile.name,
+        release.name,
         platform,
         version,
     }));

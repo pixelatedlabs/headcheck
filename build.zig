@@ -3,19 +3,19 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    const options, const version = wip_generateOptions(b);
-    const debug = wip_compileDebug(b, options);
-    const command = wip_run(b, debug);
-    const release = wip_compileRelease(b, options);
-    const upx = wip_upx(b, release.getEmittedBin());
-    const testing = wip_test(b, release.getEmittedBin(), version);
-    const zip, const zip_output = wip_zip(b, release.getEmittedBin());
+    const options, const version = generateOptions(b);
+    const debug = compileDebug(b, options);
+    const command = run(b, debug);
+    const release = compileRelease(b, options);
+    const upx = compressUpx(b, release.getEmittedBin());
+    const testing = testSystem(b, release.getEmittedBin(), version);
+    const zip, const zip_output = compressZip(b, release.getEmittedBin());
     const compile_output = b.addInstallArtifact(
         release,
-        .{ .dest_dir = .{ .override = .{ .custom = wip_platform(b, release.rootModuleTarget()) } } },
+        .{ .dest_dir = .{ .override = .{ .custom = platform(b, release.rootModuleTarget()) } } },
     );
-    const full = wip_installShort(b, release.rootModuleTarget(), zip_output);
-    const short = wip_installLong(b, release, zip_output, version);
+    const full = installShort(b, release.rootModuleTarget(), zip_output);
+    const short = installLong(b, release, zip_output, version);
 
     b.installArtifact(debug);
 
@@ -28,11 +28,11 @@ pub fn build(b: *std.Build) void {
     short.step.dependOn(&full.step);
     package.dependOn(&short.step);
 
-    const run = b.step("run", "Run the application");
-    run.dependOn(&command.step);
+    const runCommand = b.step("run", "Run the application");
+    runCommand.dependOn(&command.step);
 }
 
-fn wip_run(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.Run {
+fn run(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.Run {
     const command = b.addRunArtifact(compile);
     if (b.args) |args| {
         command.addArgs(args);
@@ -40,14 +40,14 @@ fn wip_run(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.Run 
     return command;
 }
 
-fn wip_generateOptions(b: *std.Build) struct { *std.Build.Step.Options, []const u8 } {
+fn generateOptions(b: *std.Build) struct { *std.Build.Step.Options, []const u8 } {
     const options = b.addOptions();
     const version = b.option([]const u8, "version", "version") orelse "0.0.0";
     options.addOption([]const u8, "version", version);
     return .{ options, version };
 }
 
-fn wip_compileDebug(b: *std.Build, options: *std.Build.Step.Options) *std.Build.Step.Compile {
+fn compileDebug(b: *std.Build, options: *std.Build.Step.Options) *std.Build.Step.Compile {
     const compile = b.addExecutable(.{
         .name = "headcheck",
         .root_module = b.createModule(.{
@@ -60,7 +60,7 @@ fn wip_compileDebug(b: *std.Build, options: *std.Build.Step.Options) *std.Build.
     return compile;
 }
 
-fn wip_compileRelease(b: *std.Build, options: *std.Build.Step.Options) *std.Build.Step.Compile {
+fn compileRelease(b: *std.Build, options: *std.Build.Step.Options) *std.Build.Step.Compile {
     const compile = b.addExecutable(.{
         .name = "headcheck",
         .root_module = b.createModule(.{
@@ -78,40 +78,40 @@ fn wip_compileRelease(b: *std.Build, options: *std.Build.Step.Options) *std.Buil
     return compile;
 }
 
-fn wip_upx(b: *std.Build, bin: std.Build.LazyPath) *std.Build.Step.Run {
+fn compressUpx(b: *std.Build, bin: std.Build.LazyPath) *std.Build.Step.Run {
     const compress = b.addSystemCommand(&.{ "upx", "--lzma", "-9" });
     compress.stdio = .{ .check = .{} };
     compress.addFileArg(bin);
     return compress;
 }
 
-fn wip_test(b: *std.Build, bin: std.Build.LazyPath, version: []const u8) *std.Build.Step.Run {
+fn testSystem(b: *std.Build, bin: std.Build.LazyPath, version: []const u8) *std.Build.Step.Run {
     const testing = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
     testing.addFileArg(bin);
     testing.addArg(version);
     return testing;
 }
 
-fn wip_zip(b: *std.Build, bin: std.Build.LazyPath) struct { *std.Build.Step.Run, std.Build.LazyPath } {
+fn compressZip(b: *std.Build, bin: std.Build.LazyPath) struct { *std.Build.Step.Run, std.Build.LazyPath } {
     const command = b.addSystemCommand(&.{ "zip", "--junk-paths" });
     command.addFileArg(bin);
     const output = command.addOutputFileArg("headcheck.zip");
     return .{ command, output };
 }
 
-fn wip_installShort(b: *std.Build, target: std.Target, file: std.Build.LazyPath) *std.Build.Step.InstallFile {
-    return b.addInstallFile(file, b.fmt("{s}.zip", .{wip_platform(b, target)}));
+fn installShort(b: *std.Build, target: std.Target, file: std.Build.LazyPath) *std.Build.Step.InstallFile {
+    return b.addInstallFile(file, b.fmt("{s}.zip", .{platform(b, target)}));
 }
 
-fn wip_installLong(b: *std.Build, compile: *std.Build.Step.Compile, file: std.Build.LazyPath, version: []const u8) *std.Build.Step.InstallFile {
+fn installLong(b: *std.Build, compile: *std.Build.Step.Compile, file: std.Build.LazyPath, version: []const u8) *std.Build.Step.InstallFile {
     return b.addInstallFile(file, b.fmt("{s}_{s}_{s}.zip", .{
         compile.name,
-        wip_platform(b, compile.rootModuleTarget()),
+        platform(b, compile.rootModuleTarget()),
         version,
     }));
 }
 
-fn wip_platform(b: *std.Build, target: std.Target) []u8 {
+fn platform(b: *std.Build, target: std.Target) []u8 {
     return b.fmt(
         "{s}_{s}",
         .{

@@ -34,15 +34,13 @@ pub fn main() !void {
         std.process.exit(2);
     };
 
-    var buf: [4096]u8 = undefined;
-    var req = try client.open(.HEAD, url, .{ .server_header_buffer = &buf });
+    var req = try client.request(.HEAD, url, .{});
     defer req.deinit();
 
-    try req.send();
-    try req.finish();
-    try req.wait();
-
-    const status = @intFromEnum(req.response.status);
+    const headBuffer: []u8 = undefined;
+    try req.sendBodiless();
+    const response = try req.receiveHead(headBuffer);
+    const status = @intFromEnum(response.head.status);
     if (status < 200 or status >= 300) {
         print("failure: {d}\n", .{status});
         std.process.exit(1);
@@ -51,7 +49,7 @@ pub fn main() !void {
     print("success: {d}\n", .{status});
 }
 
+var stdOut = std.fs.File.Writer.initStreaming(std.fs.File.stdout(), &.{});
 fn print(comptime fmt: []const u8, args: anytype) void {
-    const writer = std.io.getStdOut().writer();
-    nosuspend writer.print(fmt, args) catch return;
+    stdOut.interface.print(fmt, args) catch return;
 }

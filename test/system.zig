@@ -44,8 +44,13 @@ fn server() !void {
         var connection = try serverTcp.accept();
         defer connection.stream.close();
 
-        var buffer: [1024]u8 = undefined;
-        var serverHttp = std.http.Server.init(connection, &buffer);
+        var read_buffer: [1024]u8 = undefined;
+        var write_buffer: [1024]u8 = undefined;
+
+        var http_reader = connection.stream.reader(&read_buffer);
+        var http_writer = connection.stream.writer(&write_buffer);
+
+        var serverHttp = std.http.Server.init(http_reader.interface(), &http_writer.interface);
 
         var request = serverHttp.receiveHead() catch return;
         const trimmed = std.mem.trimLeft(u8, request.head.target, "/");

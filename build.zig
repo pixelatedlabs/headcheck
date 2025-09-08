@@ -3,11 +3,19 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    // Add version option.
+    // Configure build options.
     const version = b.option([]const u8, "version", "version") orelse "0.0.0";
+
+    // Add build options.
     const options = b.addOptions();
     options.addOption([]const u8, "version", version);
 
+    // Specify release modes.
+    buildDebug(b, options);
+    buildRelease(b, options, version);
+}
+
+fn buildDebug(b: *std.Build, options: *std.Build.Step.Options) void {
     // Compile source code in debug mode.
     const debug = b.addExecutable(.{
         .name = "headcheck",
@@ -19,7 +27,9 @@ pub fn build(b: *std.Build) void {
     });
     debug.root_module.addOptions("config", options);
     b.installArtifact(debug);
+}
 
+fn buildRelease(b: *std.Build, options: *std.Build.Step.Options, version: []const u8) void {
     // Compile source code in release mode.
     const release = b.addExecutable(.{
         .name = "headcheck",

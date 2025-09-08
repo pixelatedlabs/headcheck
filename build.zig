@@ -3,9 +3,7 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{
-        .default_target = b.graph.host.query,
-    });
+    const target = b.standardTargetOptions(.{ .default_target = b.graph.host.query });
 
     const version = b.option([]const u8, "version", "version") orelse "0.0.0";
 
@@ -51,7 +49,7 @@ pub fn build(b: *std.Build) void {
     zip_step.addFileArg(compile_release_output);
     zip_step.step.dependOn(&test_step.step);
 
-    const name_platform = b.fmt(
+    const platform = b.fmt(
         "{s}_{s}",
         .{
             @tagName(target.result.os.tag),
@@ -63,30 +61,26 @@ pub fn build(b: *std.Build) void {
         },
     );
 
-    const name_full = b.fmt("{s}_{s}_{s}.zip", .{
-        compile_release_step.name,
-        name_platform,
-        version,
-    });
-
-    const name_short = b.fmt("{s}.zip", .{name_platform});
-
     const artifact_exe_debug_step = b.addInstallArtifact(compile_debug_step, .{});
 
     const artifact_exe_release_step = b.addInstallArtifact(compile_release_step, .{
         .dest_dir = .{
             .override = .{
-                .custom = name_platform,
+                .custom = platform,
             },
         },
     });
     artifact_exe_release_step.step.dependOn(&zip_step.step);
 
-    const artifact_zip_full_step = b.addInstallFile(zip_output, name_full);
+    const artifact_zip_full_step = b.addInstallFile(zip_output, b.fmt("{s}_{s}_{s}.zip", .{
+        compile_release_step.name,
+        platform,
+        version,
+    }));
     artifact_zip_full_step.step.dependOn(&artifact_exe_release_step.step);
 
-    const artifact_zip_short_step = b.addInstallFile(zip_output, name_short);
-    artifact_zip_short_step.step.dependOn(&artifact_zip_full_step.step);
+    const artifact_zip_short_step = b.addInstallFile(zip_output, b.fmt("{s}.zip", .{platform}));
+    artifact_zip_short_step.step.dependOn(&artifact_exe_release_step.step);
 
     const run_step = b.addRunArtifact(compile_debug_step);
     if (b.args) |args| {
@@ -98,6 +92,7 @@ pub fn build(b: *std.Build) void {
     option_install.dependOn(&artifact_exe_debug_step.step);
 
     const option_package = b.step("release", "Package for publishing");
+    option_package.dependOn(&artifact_zip_full_step.step);
     option_package.dependOn(&artifact_zip_short_step.step);
 
     const option_run = b.step("run", "Run the application");

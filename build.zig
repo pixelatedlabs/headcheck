@@ -19,19 +19,36 @@ pub fn build(b: *std.Build) void {
     const artifact_run = artifactRun(b, compile_debug);
 
     const option_install = b.getInstallStep();
-    option_install.dependOn(&artifact_debug.step);
+    buildDependencies(&.{
+        &artifact_debug.step,
+        option_install,
+    });
 
     const option_package = b.step("release", "Package for publishing");
-    compress_upx.step.dependOn(&compile_release.step);
-    test_system.step.dependOn(&compress_upx.step);
-    compress_zip.step.dependOn(&test_system.step);
-    artifact_release.step.dependOn(&compress_zip.step);
-    artifact_full.step.dependOn(&artifact_release.step);
-    artifact_short.step.dependOn(&artifact_full.step);
-    option_package.dependOn(&artifact_short.step);
+    buildDependencies(&.{
+        &compile_release.step,
+        &compress_upx.step,
+        &test_system.step,
+        &compress_zip.step,
+        &artifact_release.step,
+        &artifact_full.step,
+        &artifact_short.step,
+        option_package,
+    });
 
     const option_run = b.step("run", "Run the application");
-    option_run.dependOn(&artifact_run.step);
+    buildDependencies(&.{
+        &artifact_run.step,
+        option_run,
+    });
+}
+
+fn buildDependencies(steps: []const *std.Build.Step) void {
+    var last = steps[0];
+    for (steps[1..]) |step| {
+        step.dependOn(last);
+        last = step;
+    }
 }
 
 fn artifactFull(b: *std.Build, file: std.Build.LazyPath, name: []const u8) *std.Build.Step.InstallFile {

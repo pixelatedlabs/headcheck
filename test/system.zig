@@ -15,7 +15,7 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    var thread = try std.Thread.spawn(.{}, server, .{});
+    var thread = try std.Thread.spawn(.{}, run, .{});
     defer thread.join();
 
     const testArgs = Args{
@@ -36,20 +36,26 @@ pub fn main() !void {
     connection.close();
 }
 
-fn server() !void {
-    var serverTcp = try address.listen(.{ .reuse_address = true });
-    defer serverTcp.deinit();
+fn run() !void {
+    var listener = try address.listen(.{ .reuse_address = true });
+    defer listener.deinit();
 
     while (running) {
-        var connection = try serverTcp.accept();
+        var connection = try listener.accept();
         defer connection.stream.close();
 
-        var buffer: [1024]u8 = undefined;
-        var serverHttp = std.http.Server.init(connection, &buffer);
+        var read_buffer: [1024]u8 = undefined;
+        var read_http = connection.stream.reader(&read_buffer);
 
-        var request = serverHttp.receiveHead() catch return;
+        var write_buffer: [1024]u8 = undefined;
+        var write_http = connection.stream.writer(&write_buffer);
+
+        var server = std.http.Server.init(read_http.interface(), &write_http.interface);
+        var request = server.receiveHead() catch return;
+
         const trimmed = std.mem.trimLeft(u8, request.head.target, "/");
         const value = try std.fmt.parseInt(i32, trimmed, 10);
+
         try request.respond("", .{ .status = @enumFromInt(value) });
     }
 }

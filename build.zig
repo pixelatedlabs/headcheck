@@ -3,122 +3,115 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    // Configure build options.
-    const version = b.option([]const u8, "version", "version") orelse "0.0.0";
+    // Read compile target from CLI arguments.
+    const target_option = b.standardTargetOptions(.{ .default_target = b.graph.host.query });
+    const target_name = b.fmt(
+        "{s}_{s}",
+        .{
+            @tagName(target_option.result.os.tag),
+            switch (target_option.result.cpu.arch) {
+                .aarch64 => "arm64",
+                .x86_64 => "x64",
+                else => |arch| @tagName(arch),
+            },
+        },
+    );
 
-    // Add build options.
+    // Read application version from CLI arguments.
+    const version_option = b.option([]const u8, "version", "version") orelse "0.0.0";
+
+    // Build runtime options.
     const options = b.addOptions();
-    options.addOption([]const u8, "version", version);
+    options.addOption([]const u8, "version", version_option);
 
-    // Specify release modes.
-    buildDebug(b, options);
-    buildRun(b, options);
-    buildRelease(b, options, version);
-}
-
-fn buildDebug(b: *std.Build, options: *std.Build.Step.Options) void {
-    // Compile source code in debug mode.
-    const debug = b.addExecutable(.{
+    // Compile in debug mode.
+    const compile_debug_step = b.addExecutable(.{
         .name = "headcheck",
         .root_module = b.createModule(.{
             .optimize = .Debug,
             .root_source_file = b.path("src/main.zig"),
-            .target = b.graph.host,
+            .target = target_option,
         }),
     });
-    debug.root_module.addOptions("config", options);
-    b.installArtifact(debug);
-}
+    compile_debug_step.root_module.addOptions("config", options);
 
-fn buildRun(b: *std.Build, options: *std.Build.Step.Options) void {
-    // Compile source code in standard mode.
-    const compile = b.addExecutable(.{
-        .name = "headcheck",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/main.zig"),
-            .target = b.graph.host,
-        }),
-    });
-    compile.root_module.addOptions("config", options);
-    b.installArtifact(compile);
-
-    const command = b.addRunArtifact(compile);
-    if (b.args) |args| {
-        command.addArgs(args);
-    }
-
-    const run = b.step("run", "Run the application");
-    run.dependOn(&command.step);
-}
-
-fn buildRelease(b: *std.Build, options: *std.Build.Step.Options, version: []const u8) void {
-    // Compile source code in release mode.
-    const release = b.addExecutable(.{
+    // Compile in release mode.
+    const compile_release_step = b.addExecutable(.{
         .name = "headcheck",
         .root_module = b.createModule(.{
             .omit_frame_pointer = true,
             .optimize = .ReleaseSmall,
             .root_source_file = b.path("src/main.zig"),
             .single_threaded = true,
-            .target = b.standardTargetOptions(.{
-                .default_target = b.graph.host.query,
-            }),
+            .target = target_option,
             .unwind_tables = .none,
         }),
     });
-    release.root_module.addOptions("config", options);
+    compile_release_step.root_module.addOptions("config", options);
+    const compile_release_output = compile_release_step.getEmittedBin();
 
-    // Compress executable using UPX.
-    const compress = b.addSystemCommand(&.{ "upx", "--lzma", "-9" });
-    compress.stdio = .{ .check = .{} };
-    compress.addFileArg(release.getEmittedBin());
-    compress.step.dependOn(&release.step);
+    // Compress release executable using UPX.
+    const upx_step = b.addSystemCommand(&.{ "upx", "--lzma", "-9" });
+    upx_step.stdio = .{ .check = .{} };
+    upx_step.addFileArg(compile_release_output);
+    upx_step.step.dependOn(&compile_release_step.step);
 
-    // Run system tests.
-    const testing = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
-    testing.addFileArg(release.getEmittedBin());
-    testing.addArg(version);
-    testing.step.dependOn(&compress.step);
+    // Run system tests against release executable.
+    const test_step = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
+    test_step.addFileArg(compile_release_output);
+    test_step.addArg(version_option);
+    test_step.step.dependOn(&upx_step.step);
 
-    // Add executable to ZIP archive.
-    const archive = b.addSystemCommand(&.{ "zip", "--junk-paths" });
-    const archive_path = archive.addOutputFileArg("headcheck.zip");
-    archive.addFileArg(release.getEmittedBin());
-    archive.step.dependOn(&testing.step);
+    // Compress release executable using ZIP.
+    const zip_step = b.addSystemCommand(&.{ "zip", "--junk-paths" });
+    const zip_output = zip_step.addOutputFileArg("headcheck.zip");
+    zip_step.addFileArg(compile_release_output);
+    zip_step.step.dependOn(&test_step.step);
 
-    // Calculate platorm name, for example 'linux_arm64'.
-    const platform = b.fmt(
-        "{s}_{s}",
-        .{
-            @tagName(release.rootModuleTarget().os.tag),
-            switch (release.rootModuleTarget().cpu.arch) {
-                .aarch64 => "arm64",
-                .x86_64 => "x64",
-                else => |a| @tagName(a),
+    // Output debug executable.
+    const artifact_exe_debug_step = b.addInstallArtifact(compile_debug_step, .{});
+
+    // Output release executable.
+    const artifact_exe_release_step = b.addInstallArtifact(compile_release_step, .{
+        .dest_dir = .{
+            .override = .{
+                .custom = target_name,
             },
         },
-    );
+    });
+    artifact_exe_release_step.step.dependOn(&zip_step.step);
 
-    // Install raw output.
-    const compile_output = b.addInstallArtifact(
-        release,
-        .{ .dest_dir = .{ .override = .{ .custom = platform } } },
-    );
-    compile_output.step.dependOn(&archive.step);
-
-    // Install full compressed output.
-    const full = b.addInstallFile(archive_path, b.fmt("{s}.zip", .{platform}));
-    full.step.dependOn(&compile_output.step);
-
-    // Install short compressed output.
-    const short = b.addInstallFile(archive_path, b.fmt("{s}_{s}_{s}.zip", .{
-        release.name,
-        platform,
-        version,
+    // Output zipped release executable using full name.
+    // For example 'headcheck_linux_x64_1.2.3.zip'.
+    const artifact_zip_full_step = b.addInstallFile(zip_output, b.fmt("{s}_{s}_{s}.zip", .{
+        compile_release_step.name,
+        target_name,
+        version_option,
     }));
-    short.step.dependOn(&full.step);
+    artifact_zip_full_step.step.dependOn(&artifact_exe_release_step.step);
 
-    // Setup package step.
-    var package = b.step("release", "Package for publishing");
-    package.dependOn(&short.step);
+    // Output zipped release executable using short name.
+    // For example 'linux_x64.zip'.
+    const artifact_zip_short_step = b.addInstallFile(zip_output, b.fmt("{s}.zip", .{target_name}));
+    artifact_zip_short_step.step.dependOn(&artifact_exe_release_step.step);
+
+    // Run the debug executable.
+    const run_step = b.addRunArtifact(compile_debug_step);
+    if (b.args) |args| {
+        run_step.addArgs(args);
+    }
+    run_step.step.dependOn(&compile_debug_step.step);
+
+    // Setup install option (default).
+    const option_install = b.getInstallStep();
+    option_install.dependOn(&artifact_exe_debug_step.step);
+
+    // Setup release option.
+    const option_package = b.step("release", "Package for publishing");
+    option_package.dependOn(&artifact_zip_full_step.step);
+    option_package.dependOn(&artifact_zip_short_step.step);
+
+    // Setup run option.
+    const option_run = b.step("run", "Run the application");
+    option_run.dependOn(&run_step.step);
 }

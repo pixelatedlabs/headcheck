@@ -40,7 +40,7 @@ fn buildRelease(b: *std.Build, options: *std.Build.Step.Options, version: []cons
     const release = wip_compileRelease(b, options);
     const upx = wip_upx(b, release.getEmittedBin());
     const testing = wip_test(b, release.getEmittedBin(), version);
-    const zip = wip_zip(b, release.getEmittedBin());
+    const zip, const zip_output = wip_zip(b, release.getEmittedBin());
 
     upx.step.dependOn(&release.step);
     testing.step.dependOn(&upx.step);
@@ -67,12 +67,11 @@ fn buildRelease(b: *std.Build, options: *std.Build.Step.Options, version: []cons
     compile_output.step.dependOn(&zip.step);
 
     // Install full compressed output.
-    const archive_path = zip.addOutputFileArg("headcheck.zip");
-    const full = b.addInstallFile(archive_path, b.fmt("{s}.zip", .{platform}));
+    const full = b.addInstallFile(zip_output, b.fmt("{s}.zip", .{platform}));
     full.step.dependOn(&compile_output.step);
 
     // Install short compressed output.
-    const short = b.addInstallFile(archive_path, b.fmt("{s}_{s}_{s}.zip", .{
+    const short = b.addInstallFile(zip_output, b.fmt("{s}_{s}_{s}.zip", .{
         release.name,
         platform,
         version,
@@ -129,8 +128,9 @@ fn wip_test(b: *std.Build, bin: std.Build.LazyPath, version: []const u8) *std.Bu
     return testing;
 }
 
-fn wip_zip(b: *std.Build, bin: std.Build.LazyPath) *std.Build.Step.Run {
-    const archive = b.addSystemCommand(&.{ "zip", "--junk-paths" });
-    archive.addFileArg(bin);
-    return archive;
+fn wip_zip(b: *std.Build, bin: std.Build.LazyPath) struct { *std.Build.Step.Run, std.Build.LazyPath } {
+    const command = b.addSystemCommand(&.{ "zip", "--junk-paths" });
+    command.addFileArg(bin);
+    const output = command.addOutputFileArg("headcheck.zip");
+    return .{ command, output };
 }

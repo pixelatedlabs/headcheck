@@ -41,41 +41,20 @@ fn buildRelease(b: *std.Build, options: *std.Build.Step.Options, version: []cons
     const upx = wip_upx(b, release.getEmittedBin());
     const testing = wip_test(b, release.getEmittedBin(), version);
     const zip, const zip_output = wip_zip(b, release.getEmittedBin());
+    const compile_output = b.addInstallArtifact(
+        release,
+        .{ .dest_dir = .{ .override = .{ .custom = wip_platform(b, release.rootModuleTarget()) } } },
+    );
+    const full = wip_installShort(b, release.rootModuleTarget(), zip_output);
+    const short = wip_installLong(b, release, zip_output, version);
+    var package = b.step("release", "Package for publishing");
 
     upx.step.dependOn(&release.step);
     testing.step.dependOn(&upx.step);
     zip.step.dependOn(&testing.step);
-
-    // Calculate platorm name, for example 'linux_arm64'.
-    const platform = b.fmt(
-        "{s}_{s}",
-        .{
-            @tagName(release.rootModuleTarget().os.tag),
-            switch (release.rootModuleTarget().cpu.arch) {
-                .aarch64 => "arm64",
-                .x86_64 => "x64",
-                else => |a| @tagName(a),
-            },
-        },
-    );
-
-    // Install raw output.
-    const compile_output = b.addInstallArtifact(
-        release,
-        .{ .dest_dir = .{ .override = .{ .custom = platform } } },
-    );
     compile_output.step.dependOn(&zip.step);
-
-    // Install full compressed output.
-    const full = wip_installShort(b, release.rootModuleTarget(), zip_output);
     full.step.dependOn(&compile_output.step);
-
-    // Install short compressed output.
-    const short = wip_installLong(b, release, zip_output, version);
     short.step.dependOn(&full.step);
-
-    // Setup package step.
-    var package = b.step("release", "Package for publishing");
     package.dependOn(&short.step);
 }
 

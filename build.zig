@@ -4,10 +4,7 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) void {
     const options, const version = wip_generateOptions(b);
-
     const debug = wip_compileDebug(b, options);
-    b.installArtifact(debug);
-
     const command = wip_run(b, debug);
     const release = wip_compileRelease(b, options);
     const upx = wip_upx(b, release.getEmittedBin());
@@ -19,6 +16,8 @@ pub fn build(b: *std.Build) void {
     );
     const full = wip_installShort(b, release.rootModuleTarget(), zip_output);
     const short = wip_installLong(b, release, zip_output, version);
+
+    b.installArtifact(debug);
 
     const package = b.step("release", "Package for publishing");
     upx.step.dependOn(&release.step);

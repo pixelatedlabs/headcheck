@@ -31,14 +31,14 @@ jobs:
         if: github.event_name == 'release'
         with:
           push: never
-          runCmd: zig build package -Dversion=${{ github.ref_name }}
+          runCmd: zig build release -Dversion=${{ github.ref_name }}
 
       - name: Build
         uses: devcontainers/ci@v0.3
         if: github.event_name != 'release'
         with:
           push: never
-          runCmd: zig build package
+          runCmd: zig build release
 
       - name: Package
         uses: actions/upload-artifact@v4

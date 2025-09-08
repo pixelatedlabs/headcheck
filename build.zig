@@ -97,6 +97,6 @@ fn buildRelease(b: *std.Build, options: *std.Build.Step.Options, version: []cons
     short.step.dependOn(&full.step);
 
     // Setup package step.
-    var package = b.step("package", "Package the executable");
+    var package = b.step("release", "Package for publishing");
     package.dependOn(&short.step);
 }

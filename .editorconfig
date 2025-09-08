@@ -3,3 +3,6 @@
 [*]
 insert_final_newline = true
 trim_trailing_whitespace = true
+
+[*.{containerfile,json}]
+indent_size = tab

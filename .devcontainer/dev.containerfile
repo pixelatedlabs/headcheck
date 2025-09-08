@@ -11,7 +11,7 @@ RUN <<EOF
 	ARCH=$(uname -m)
 
 	dnf --assumeyes --setopt=install_weak_deps=false install \
-		git ImageMagick optipng upx zig zip \
+		git ImageMagick optipng upx zip \
 		https://github.com/charmbracelet/freeze/releases/download/v$FREEZE/freeze-$FREEZE-1.$ARCH.rpm
 
 	mkdir /opt/zig

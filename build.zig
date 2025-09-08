@@ -10,9 +10,12 @@ pub fn build(b: *std.Build) void {
     const compress_zip, const zip_output = compressZip(b, compile_release.getEmittedBin());
     const test_system = testSystem(b, compile_release.getEmittedBin(), version);
     const artifact_debug = b.addInstallArtifact(compile_debug, .{});
-    const artifact_full = artifactFull(b, compile_release, zip_output, version);
-    const artifact_short = artifactShort(b, compile_release.rootModuleTarget(), zip_output);
-    const artifact_release = artifactInstall(b, compile_release);
+    const name_full = nameFull(b, compile_release, version);
+    const name_platform = namePlatform(b, compile_release.rootModuleTarget());
+    const name_short = nameShort(b, compile_release);
+    const artifact_full = artifactFull(b, zip_output, name_full);
+    const artifact_short = artifactShort(b, zip_output, name_short);
+    const artifact_release = artifactInstall(b, compile_release, name_platform);
     const artifact_run = artifactRun(b, compile_debug);
 
     const option_install = b.getInstallStep();
@@ -31,26 +34,22 @@ pub fn build(b: *std.Build) void {
     option_run.dependOn(&artifact_run.step);
 }
 
-fn artifactFull(b: *std.Build, compile: *std.Build.Step.Compile, file: std.Build.LazyPath, version: []const u8) *std.Build.Step.InstallFile {
-    return b.addInstallFile(file, b.fmt("{s}_{s}_{s}.zip", .{
-        compile.name,
-        utilityPlatform(b, compile.rootModuleTarget()),
-        version,
-    }));
+fn artifactFull(b: *std.Build, file: std.Build.LazyPath, name: []const u8) *std.Build.Step.InstallFile {
+    return b.addInstallFile(file, name);
 }
 
-fn artifactInstall(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.InstallArtifact {
+fn artifactInstall(b: *std.Build, compile: *std.Build.Step.Compile, name: []const u8) *std.Build.Step.InstallArtifact {
     return b.addInstallArtifact(compile, .{
         .dest_dir = .{
             .override = .{
-                .custom = utilityPlatform(b, compile.rootModuleTarget()),
+                .custom = name,
             },
         },
     });
 }
 
-fn artifactShort(b: *std.Build, target: std.Target, file: std.Build.LazyPath) *std.Build.Step.InstallFile {
-    return b.addInstallFile(file, b.fmt("{s}.zip", .{utilityPlatform(b, target)}));
+fn artifactShort(b: *std.Build, file: std.Build.LazyPath, name: []const u8) *std.Build.Step.InstallFile {
+    return b.addInstallFile(file, name);
 }
 
 fn artifactRun(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.Run {
@@ -113,14 +112,15 @@ fn generateOptions(b: *std.Build) struct { *std.Build.Step.Options, []const u8 }
     return .{ options, version };
 }
 
-fn testSystem(b: *std.Build, bin: std.Build.LazyPath, version: []const u8) *std.Build.Step.Run {
-    const testing = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
-    testing.addFileArg(bin);
-    testing.addArg(version);
-    return testing;
+fn nameFull(b: *std.Build, compile: *std.Build.Step.Compile, version: []const u8) []const u8 {
+    return b.fmt("{s}_{s}_{s}.zip", .{
+        compile.name,
+        namePlatform(b, compile.rootModuleTarget()),
+        version,
+    });
 }
 
-fn utilityPlatform(b: *std.Build, target: std.Target) []u8 {
+fn namePlatform(b: *std.Build, target: std.Target) []u8 {
     return b.fmt(
         "{s}_{s}",
         .{
@@ -132,4 +132,15 @@ fn utilityPlatform(b: *std.Build, target: std.Target) []u8 {
             },
         },
     );
+}
+
+fn nameShort(b: *std.Build, compile: *std.Build.Step.Compile) []const u8 {
+    return b.fmt("{s}.zip", .{namePlatform(b, compile.rootModuleTarget())});
+}
+
+fn testSystem(b: *std.Build, bin: std.Build.LazyPath, version: []const u8) *std.Build.Step.Run {
+    const testing = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
+    testing.addFileArg(bin);
+    testing.addArg(version);
+    return testing;
 }

@@ -5,15 +5,12 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const options, const version = generateOptions(b);
     const debug = compileDebug(b, options);
-    const command = run(b, debug);
+    const command = artifactRun(b, debug);
     const release = compileRelease(b, options);
     const upx = compressUpx(b, release.getEmittedBin());
     const testing = testSystem(b, release.getEmittedBin(), version);
     const zip, const zip_output = compressZip(b, release.getEmittedBin());
-    const compile_output = b.addInstallArtifact(
-        release,
-        .{ .dest_dir = .{ .override = .{ .custom = platform(b, release.rootModuleTarget()) } } },
-    );
+    const compile_output = artifactInstall(b, release);
     const full = installShort(b, release.rootModuleTarget(), zip_output);
     const short = installLong(b, release, zip_output, version);
 
@@ -32,12 +29,19 @@ pub fn build(b: *std.Build) void {
     runCommand.dependOn(&command.step);
 }
 
-fn run(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.Run {
+fn artifactRun(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.Run {
     const command = b.addRunArtifact(compile);
     if (b.args) |args| {
         command.addArgs(args);
     }
     return command;
+}
+
+fn artifactInstall(b: *std.Build, compile: *std.Build.Step.Compile) *std.Build.Step.InstallArtifact {
+    return b.addInstallArtifact(
+        compile,
+        .{ .dest_dir = .{ .override = .{ .custom = platform(b, compile.rootModuleTarget()) } } },
+    );
 }
 
 fn generateOptions(b: *std.Build) struct { *std.Build.Step.Options, []const u8 } {

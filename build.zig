@@ -3,13 +3,26 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    // Read options from arguments.
-    const target = b.standardTargetOptions(.{ .default_target = b.graph.host.query });
-    const version = b.option([]const u8, "version", "version") orelse "0.0.0";
+    // Read compile target from CLI arguments.
+    const target_option = b.standardTargetOptions(.{ .default_target = b.graph.host.query });
+    const target_name = b.fmt(
+        "{s}_{s}",
+        .{
+            @tagName(target_option.result.os.tag),
+            switch (target_option.result.cpu.arch) {
+                .aarch64 => "arm64",
+                .x86_64 => "x64",
+                else => |arch| @tagName(arch),
+            },
+        },
+    );
+
+    // Read application version from CLI arguments.
+    const version_option = b.option([]const u8, "version", "version") orelse "0.0.0";
 
     // Build runtime options.
     const options = b.addOptions();
-    options.addOption([]const u8, "version", version);
+    options.addOption([]const u8, "version", version_option);
 
     // Compile in debug mode.
     const compile_debug_step = b.addExecutable(.{
@@ -17,7 +30,7 @@ pub fn build(b: *std.Build) void {
         .root_module = b.createModule(.{
             .optimize = .Debug,
             .root_source_file = b.path("src/main.zig"),
-            .target = target,
+            .target = target_option,
         }),
     });
     compile_debug_step.root_module.addOptions("config", options);
@@ -30,7 +43,7 @@ pub fn build(b: *std.Build) void {
             .optimize = .ReleaseSmall,
             .root_source_file = b.path("src/main.zig"),
             .single_threaded = true,
-            .target = target,
+            .target = target_option,
             .unwind_tables = .none,
         }),
     });
@@ -46,7 +59,7 @@ pub fn build(b: *std.Build) void {
     // Run system tests against release executable.
     const test_step = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
     test_step.addFileArg(compile_release_output);
-    test_step.addArg(version);
+    test_step.addArg(version_option);
     test_step.step.dependOn(&upx_step.step);
 
     // Compress release executable using ZIP.
@@ -55,18 +68,6 @@ pub fn build(b: *std.Build) void {
     zip_step.addFileArg(compile_release_output);
     zip_step.step.dependOn(&test_step.step);
 
-    const platform = b.fmt(
-        "{s}_{s}",
-        .{
-            @tagName(target.result.os.tag),
-            switch (target.result.cpu.arch) {
-                .aarch64 => "arm64",
-                .x86_64 => "x64",
-                else => |a| @tagName(a),
-            },
-        },
-    );
-
     // Output debug executable.
     const artifact_exe_debug_step = b.addInstallArtifact(compile_debug_step, .{});
 
@@ -74,7 +75,7 @@ pub fn build(b: *std.Build) void {
     const artifact_exe_release_step = b.addInstallArtifact(compile_release_step, .{
         .dest_dir = .{
             .override = .{
-                .custom = platform,
+                .custom = target_name,
             },
         },
     });
@@ -84,14 +85,14 @@ pub fn build(b: *std.Build) void {
     // For example 'headcheck_linux_x64_1.2.3.zip'.
     const artifact_zip_full_step = b.addInstallFile(zip_output, b.fmt("{s}_{s}_{s}.zip", .{
         compile_release_step.name,
-        platform,
-        version,
+        target_name,
+        version_option,
     }));
     artifact_zip_full_step.step.dependOn(&artifact_exe_release_step.step);
 
     // Output zipped release executable using short name.
     // For example 'linux_x64.zip'.
-    const artifact_zip_short_step = b.addInstallFile(zip_output, b.fmt("{s}.zip", .{platform}));
+    const artifact_zip_short_step = b.addInstallFile(zip_output, b.fmt("{s}.zip", .{target_name}));
     artifact_zip_short_step.step.dependOn(&artifact_exe_release_step.step);
 
     // Run the debug executable.

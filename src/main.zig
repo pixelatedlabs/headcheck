@@ -36,11 +36,12 @@ pub fn main() !void {
 
     var req = try client.request(.HEAD, url, .{});
     defer req.deinit();
-
-    const headBuffer: []u8 = undefined;
     try req.sendBodiless();
-    const response = try req.receiveHead(headBuffer);
+
+    const buf: []u8 = undefined;
+    const response = try req.receiveHead(buf);
     const status = @intFromEnum(response.head.status);
+
     if (status < 200 or status >= 300) {
         print("failure: {d}\n", .{status});
         std.process.exit(1);

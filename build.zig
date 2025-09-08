@@ -31,16 +31,16 @@ pub fn build(b: *std.Build) void {
     compress.step.dependOn(&compile.step);
 
     // Run system tests.
-    // const testing = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
-    // testing.addFileArg(compile.getEmittedBin());
-    // testing.addArg(version);
-    // testing.step.dependOn(&compress.step);
+    const testing = b.addSystemCommand(&.{ "zig", "run", "test/system.zig", "--" });
+    testing.addFileArg(compile.getEmittedBin());
+    testing.addArg(version);
+    testing.step.dependOn(&compress.step);
 
     // Add executable to ZIP archive.
     const archive = b.addSystemCommand(&.{ "zip", "--junk-paths" });
     const archive_path = archive.addOutputFileArg("headcheck.zip");
     archive.addFileArg(compile.getEmittedBin());
-    archive.step.dependOn(&compress.step);
+    archive.step.dependOn(&testing.step);
 
     // Calculate platorm name, for example 'linux_arm64'.
     const platform = b.fmt(

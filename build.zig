@@ -10,19 +10,13 @@ pub fn build(b: *std.Build) void {
     const options = b.addOptions();
     options.addOption([]const u8, "version", version);
 
-    const compile = wip_compileDebug(b, options);
-    b.installArtifact(compile);
+    const debug = wip_compileDebug(b, options);
+    b.installArtifact(debug);
 
-    const command = b.addRunArtifact(compile);
+    const command = b.addRunArtifact(debug);
     if (b.args) |args| {
         command.addArgs(args);
     }
-
-    const run = b.step("run", "Run the application");
-    run.dependOn(&command.step);
-
-    const debug = wip_compileDebug(b, options);
-    b.installArtifact(debug);
 
     const release = wip_compileRelease(b, options);
     const upx = wip_upx(b, release.getEmittedBin());
@@ -34,8 +28,8 @@ pub fn build(b: *std.Build) void {
     );
     const full = wip_installShort(b, release.rootModuleTarget(), zip_output);
     const short = wip_installLong(b, release, zip_output, version);
-    var package = b.step("release", "Package for publishing");
 
+    const package = b.step("release", "Package for publishing");
     upx.step.dependOn(&release.step);
     testing.step.dependOn(&upx.step);
     zip.step.dependOn(&testing.step);
@@ -43,6 +37,9 @@ pub fn build(b: *std.Build) void {
     full.step.dependOn(&compile_output.step);
     short.step.dependOn(&full.step);
     package.dependOn(&short.step);
+
+    const run = b.step("run", "Run the application");
+    run.dependOn(&command.step);
 }
 
 fn wip_compileDebug(b: *std.Build, options: *std.Build.Step.Options) *std.Build.Step.Compile {

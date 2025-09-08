@@ -6,44 +6,34 @@ pub fn build(b: *std.Build) void {
     const options, const version = generateOptions(b);
     const compile_debug = compileDebug(b, options);
     const compile_release = compileRelease(b, options);
-    const compress_upx = compressUpx(b, compile_release.getEmittedBin());
     const compress_zip, const zip_output = compressZip(b, compile_release.getEmittedBin());
-    const test_system = testSystem(b, compile_release.getEmittedBin(), version);
-    const artifact_debug = b.addInstallArtifact(compile_debug, .{});
     const name_full = nameFull(b, compile_release, version);
     const name_platform = namePlatform(b, compile_release.rootModuleTarget());
     const name_short = nameShort(b, compile_release);
-    const artifact_full = artifactFull(b, zip_output, name_full);
-    const artifact_short = artifactShort(b, zip_output, name_short);
-    const artifact_release = artifactInstall(b, compile_release, name_platform);
-    const artifact_run = artifactRun(b, compile_debug);
 
-    const option_install = b.getInstallStep();
-    buildDependencies(&.{
-        &artifact_debug.step,
-        option_install,
+    buildOption(&.{
+        &b.addInstallArtifact(compile_debug, .{}).step,
+        b.getInstallStep(),
     });
 
-    const option_package = b.step("release", "Package for publishing");
-    buildDependencies(&.{
+    buildOption(&.{
         &compile_release.step,
-        &compress_upx.step,
-        &test_system.step,
+        &compressUpx(b, compile_release.getEmittedBin()).step,
+        &testSystem(b, compile_release.getEmittedBin(), version).step,
         &compress_zip.step,
-        &artifact_release.step,
-        &artifact_full.step,
-        &artifact_short.step,
-        option_package,
+        &artifactInstall(b, compile_release, name_platform).step,
+        &artifactFull(b, zip_output, name_full).step,
+        &artifactShort(b, zip_output, name_short).step,
+        b.step("release", "Package for publishing"),
     });
 
-    const option_run = b.step("run", "Run the application");
-    buildDependencies(&.{
-        &artifact_run.step,
-        option_run,
+    buildOption(&.{
+        &artifactRun(b, compile_debug).step,
+        b.step("run", "Run the application"),
     });
 }
 
-fn buildDependencies(steps: []const *std.Build.Step) void {
+fn buildOption(steps: []const *std.Build.Step) void {
     var last = steps[0];
     for (steps[1..]) |step| {
         step.dependOn(last);

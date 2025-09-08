@@ -13,8 +13,10 @@ pub fn build(b: *std.Build) void {
     const compile_output = artifactInstall(b, release);
     const full = installShort(b, release.rootModuleTarget(), zip_output);
     const short = installLong(b, release, zip_output, version);
+    const main = b.addInstallArtifact(debug, .{});
 
-    b.installArtifact(debug);
+    const default = b.getInstallStep();
+    default.dependOn(&main.step);
 
     const package = b.step("release", "Package for publishing");
     upx.step.dependOn(&release.step);

@@ -6,39 +6,32 @@ pub fn build(b: *std.Build) void {
     const options, const version = generateOptions(b);
     const compile_debug = compileDebug(b, options);
     const compile_release = compileRelease(b, options);
+    const compress_upx = compressUpx(b, compile_release.getEmittedBin());
     const compress_zip, const zip_output = compressZip(b, compile_release.getEmittedBin());
+    const test_system = testSystem(b, compile_release.getEmittedBin(), version);
+    const artifact_debug = b.addInstallArtifact(compile_debug, .{});
     const name_full = nameFull(b, compile_release, version);
     const name_platform = namePlatform(b, compile_release.rootModuleTarget());
     const name_short = nameShort(b, compile_release);
+    const artifact_full = artifactFull(b, zip_output, name_full);
+    const artifact_short = artifactShort(b, zip_output, name_short);
+    const artifact_release = artifactInstall(b, compile_release, name_platform);
+    const artifact_run = artifactRun(b, compile_debug);
 
-    buildOption(&.{
-        &b.addInstallArtifact(compile_debug, .{}).step,
-        b.getInstallStep(),
-    });
+    const option_install = b.getInstallStep();
+    option_install.dependOn(&artifact_debug.step);
 
-    buildOption(&.{
-        &compile_release.step,
-        &compressUpx(b, compile_release.getEmittedBin()).step,
-        &testSystem(b, compile_release.getEmittedBin(), version).step,
-        &compress_zip.step,
-        &artifactInstall(b, compile_release, name_platform).step,
-        &artifactFull(b, zip_output, name_full).step,
-        &artifactShort(b, zip_output, name_short).step,
-        b.step("release", "Package for publishing"),
-    });
+    const option_package = b.step("release", "Package for publishing");
+    compress_upx.step.dependOn(&compile_release.step);
+    test_system.step.dependOn(&compress_upx.step);
+    compress_zip.step.dependOn(&test_system.step);
+    artifact_release.step.dependOn(&compress_zip.step);
+    artifact_full.step.dependOn(&artifact_release.step);
+    artifact_short.step.dependOn(&artifact_full.step);
+    option_package.dependOn(&artifact_short.step);
 
-    buildOption(&.{
-        &artifactRun(b, compile_debug).step,
-        b.step("run", "Run the application"),
-    });
-}
-
-fn buildOption(steps: []const *std.Build.Step) void {
-    var last = steps[0];
-    for (steps[1..]) |step| {
-        step.dependOn(last);
-        last = step;
-    }
+    const option_run = b.step("run", "Run the application");
+    option_run.dependOn(&artifact_run.step);
 }
 
 fn artifactFull(b: *std.Build, file: std.Build.LazyPath, name: []const u8) *std.Build.Step.InstallFile {

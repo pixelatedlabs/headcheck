@@ -11,18 +11,21 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
+    var out = std.fs.File.stdout().writer(&.{});
+    defer out.interface.flush() catch {};
+
     if (args.len != 2) {
-        print("usage: headcheck <url>\n", .{});
+        out.interface.print("usage: headcheck <url>\n", .{}) catch {};
         std.process.exit(2);
     }
 
     if (std.mem.eql(u8, args[1], "--help")) {
-        print("docs: https://pixelatedlabs.com/headcheck\n", .{});
+        out.interface.print("docs: https://pixelatedlabs.com/headcheck\n", .{}) catch {};
         std.process.exit(0);
     }
 
     if (std.mem.eql(u8, args[1], "--version")) {
-        print("version: {s}\n", .{config.version});
+        out.interface.print("version: {s}\n", .{config.version}) catch {};
         std.process.exit(0);
     }
 
@@ -30,7 +33,7 @@ pub fn main() !void {
     defer client.deinit();
 
     const url = std.Uri.parse(args[1]) catch {
-        print("unparseable: {s}\n", .{args[1]});
+        out.interface.print("unparseable: {s}\n", .{args[1]}) catch {};
         std.process.exit(2);
     };
 
@@ -42,14 +45,9 @@ pub fn main() !void {
     const status = @intFromEnum(response.head.status);
 
     if (status < 200 or status >= 300) {
-        print("failure: {d}\n", .{status});
+        out.interface.print("failure: {d}\n", .{status}) catch {};
         std.process.exit(1);
     }
 
-    print("success: {d}\n", .{status});
-}
-
-var out = std.fs.File.Writer.initStreaming(std.fs.File.stdout(), &.{});
-fn print(comptime fmt: []const u8, args: anytype) void {
-    out.interface.print(fmt, args) catch return;
+    out.interface.print("success: {d}\n", .{status}) catch {};
 }

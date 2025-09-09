@@ -38,8 +38,7 @@ pub fn main() !void {
     defer req.deinit();
     try req.sendBodiless();
 
-    const buf: []u8 = undefined;
-    const response = try req.receiveHead(buf);
+    const response = try req.receiveHead(&.{});
     const status = @intFromEnum(response.head.status);
 
     if (status < 200 or status >= 300) {

@@ -1,13 +1,14 @@
 {
+	"$schema": "vscode://schemas/launch",
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"type": "lldb",
-			"request": "launch",
-			"name": "Debug",
-			"program": "${workspaceRoot}/zig-out/tmp-debug-build/bin/headcheck",
 			"cwd": "${workspaceRoot}",
-			"preLaunchTask": "Build"
+			"name": "Debug",
+			"preLaunchTask": "Build",
+			"program": "${workspaceRoot}/zig-out/tmp-debug-build/bin/headcheck",
+			"request": "launch",
+			"type": "lldb"
 		}
 	]
 }

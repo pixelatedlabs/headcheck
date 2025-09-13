@@ -8,6 +8,8 @@ ARG ZIG=0.15.1
 ENV PATH=/opt/zig:$PATH
 
 RUN <<EOF
+	set -euo pipefail
+
 	ARCH=$(uname -m)
 
 	dnf --assumeyes --setopt=install_weak_deps=false install \

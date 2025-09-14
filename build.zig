@@ -83,10 +83,15 @@ pub fn build(b: *std.Build) void {
 
     // Output zipped release executable using full name.
     // For example 'headcheck_linux_x64_1.2.3.zip'.
-    const artifact_zip_full_step = b.addInstallFile(zip_output, b.fmt("{s}-{s}-{s}.zip", .{
+    const artifact_zip_full_step = b.addInstallFile(zip_output, b.fmt("{s}-{s}-{s}-{s}.zip", .{
         compile_release_step.name,
-        target_name,
+        @tagName(target_option.result.os.tag),
         version_option,
+        switch (target_option.result.cpu.arch) {
+            .aarch64 => "arm64",
+            .x86_64 => "x64",
+            else => |arch| @tagName(arch),
+        },
     }));
     artifact_zip_full_step.step.dependOn(&artifact_exe_release_step.step);
 

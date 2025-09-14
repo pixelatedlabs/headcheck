@@ -43,7 +43,7 @@ jobs:
       - name: Package
         uses: actions/upload-artifact@v4
         with:
-          name: build_${{ matrix.arch }}
+          name: headcheck-linux-${{ matrix.arch }}
           path: zig-out/*.zip
 
       - name: Publish

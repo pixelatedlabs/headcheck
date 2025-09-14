@@ -6,7 +6,7 @@ pub fn build(b: *std.Build) void {
     // Read compile target from CLI arguments.
     const target_option = b.standardTargetOptions(.{ .default_target = b.graph.host.query });
     const target_name = b.fmt(
-        "{s}_{s}",
+        "{s}-{s}",
         .{
             @tagName(target_option.result.os.tag),
             switch (target_option.result.cpu.arch) {
@@ -83,7 +83,7 @@ pub fn build(b: *std.Build) void {
 
     // Output zipped release executable using full name.
     // For example 'headcheck_linux_x64_1.2.3.zip'.
-    const artifact_zip_full_step = b.addInstallFile(zip_output, b.fmt("{s}_{s}_{s}.zip", .{
+    const artifact_zip_full_step = b.addInstallFile(zip_output, b.fmt("{s}-{s}-{s}.zip", .{
         compile_release_step.name,
         target_name,
         version_option,

@@ -63,6 +63,7 @@ Useful things to know when running headcheck:
 - A successful response is defined as having a status matching `>= 200 AND < 300`
 - Headcheck can not follow redirects - they are considered to be failures
 - URLs must be fully formed - this ensures that the chosen scheme is explicit
+- Despite the name, since version `1.4.0` headcheck performs a `GET` request, not a `HEAD` request
 
 ```ruby
 # Valid

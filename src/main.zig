@@ -41,7 +41,7 @@ pub fn main() !void {
     defer req.deinit();
     try req.sendBodiless();
 
-    const response = try req.receiveHead(&.{});
+    const response = try req.receiveHead(try allocator.alloc(u8, 1024));
     const status = @intFromEnum(response.head.status);
 
     if (status < 200 or status >= 300) {

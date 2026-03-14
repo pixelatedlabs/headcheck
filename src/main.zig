@@ -41,6 +41,7 @@ pub fn main() !void {
     };
 
     var req = try client.request(.GET, url, .{ .redirect_behavior = .unhandled });
+    errdefer req.deinit();
     try req.sendBodiless();
 
     const response = try req.receiveHead(body);

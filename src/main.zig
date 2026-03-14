@@ -40,13 +40,13 @@ pub fn main() !void {
         std.process.exit(2);
     };
 
-    var req = try client.request(.GET, url, .{ .redirect_behavior = .unhandled });
-    errdefer req.deinit();
-    try req.sendBodiless();
+    var request = try client.request(.GET, url, .{ .redirect_behavior = .unhandled });
+    errdefer request.deinit();
+    try request.sendBodiless();
 
-    const response = try req.receiveHead(body);
+    const response = try request.receiveHead(body);
     const status = @intFromEnum(response.head.status);
-    req.deinit();
+    request.deinit();
 
     if (status < 200 or status >= 300) {
         out.interface.print("failure: {d}\n", .{status}) catch {};

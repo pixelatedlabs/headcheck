@@ -1,6 +1,6 @@
 # This is free and unencumbered software released into the public domain.
 
-FROM quay.io/fedora/fedora:42
+FROM quay.io/fedora/fedora:43
 
 ARG FREEZE=0.2.2
 ARG ZIG=0.15.1

@@ -32,6 +32,9 @@ pub fn main() !void {
     var client = std.http.Client{ .allocator = allocator };
     defer client.deinit();
 
+    const body = try allocator.alloc(u8, 1024);
+    defer allocator.free(body);
+
     const url = std.Uri.parse(args[1]) catch {
         out.interface.print("unparseable: {s}\n", .{args[1]}) catch {};
         std.process.exit(2);
@@ -41,7 +44,7 @@ pub fn main() !void {
     defer req.deinit();
     try req.sendBodiless();
 
-    const response = try req.receiveHead(try allocator.alloc(u8, 1024));
+    const response = try req.receiveHead(body);
     const status = @intFromEnum(response.head.status);
 
     if (status < 200 or status >= 300) {

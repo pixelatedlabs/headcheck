@@ -14,7 +14,7 @@
 </div>
 <br>
 
-Headcheck is a CLI program which performs a `HEAD` request to a given URL. It returns `0` if the
+Headcheck is a CLI program which performs a `GET` request to a given URL. It returns `0` if the
 request was successful or `1` if it was not.
 
 Headcheck is small, simple, statically compiled and feature complete. It intentionally does not
@@ -63,6 +63,7 @@ Useful things to know when running headcheck:
 - A successful response is defined as having a status matching `>= 200 AND < 300`
 - Headcheck can not follow redirects - they are considered to be failures
 - URLs must be fully formed - this ensures that the chosen scheme is explicit
+- Despite the name, since version `1.4.0` headcheck performs a `GET` request, not a `HEAD` request
 
 ```ruby
 # Valid

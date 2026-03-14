@@ -32,17 +32,21 @@ pub fn main() !void {
     var client = std.http.Client{ .allocator = allocator };
     defer client.deinit();
 
+    const body = try allocator.alloc(u8, 1024);
+    defer allocator.free(body);
+
     const url = std.Uri.parse(args[1]) catch {
         out.interface.print("unparseable: {s}\n", .{args[1]}) catch {};
         std.process.exit(2);
     };
 
-    var req = try client.request(.HEAD, url, .{});
-    defer req.deinit();
-    try req.sendBodiless();
+    var request = try client.request(.GET, url, .{ .redirect_behavior = .unhandled });
+    errdefer request.deinit();
+    try request.sendBodiless();
 
-    const response = try req.receiveHead(&.{});
+    const response = try request.receiveHead(body);
     const status = @intFromEnum(response.head.status);
+    request.deinit();
 
     if (status < 200 or status >= 300) {
         out.interface.print("failure: {d}\n", .{status}) catch {};

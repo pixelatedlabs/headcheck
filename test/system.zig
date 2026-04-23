@@ -4,14 +4,14 @@ const std = @import("std");
 
 const Args = struct { binary: []const u8, version: []const u8 };
 
-const address = std.Io.net.Ip4Address{ .bytes = [_]u8{ 127, 0, 0, 1 }, .port = 47638 };
+const address = std.Io.net.IpAddress{ .ip4 = .{ .bytes = [_]u8{ 127, 0, 0, 1 }, .port = 47638 } };
 var running = true;
 
 pub fn main(init: std.process.Init) !void {
     const allocator = init.arena.allocator();
     const args = try init.minimal.args.toSlice(allocator);
 
-    var thread = try std.Thread.spawn(.{}, run, .{});
+    var thread = try std.Thread.spawn(.{}, run, .{init.io});
     defer thread.join();
 
     const testArgs = Args{
@@ -28,28 +28,28 @@ pub fn main(init: std.process.Init) !void {
     try testVersionText(allocator, init.io, testArgs);
 
     running = false;
-    const connection = std.net.tcpConnectToAddress(address) catch return;
-    connection.close();
+    const connection = address.connect(init.io, .{ .mode = .stream }) catch return;
+    connection.close(init.io);
 }
 
-fn run() !void {
-    var listener = try address.listen(.{ .reuse_address = true });
-    defer listener.deinit();
+fn run(io: std.Io) !void {
+    var listener = try address.listen(io, .{ .reuse_address = true });
+    defer listener.deinit(io);
 
     while (running) {
-        var connection = try listener.accept();
-        defer connection.stream.close();
+        var connection = try listener.accept(io);
+        defer connection.close(io);
 
         var read_buffer: [1024]u8 = undefined;
-        var read_http = connection.stream.reader(&read_buffer);
+        var read_http = connection.reader(io, &read_buffer);
 
         var write_buffer: [1024]u8 = undefined;
-        var write_http = connection.stream.writer(&write_buffer);
+        var write_http = connection.writer(io, &write_buffer);
 
-        var server = std.http.Server.init(read_http.interface(), &write_http.interface);
+        var server = std.http.Server.init(&read_http.interface, &write_http.interface);
         var request = server.receiveHead() catch return;
 
-        const trimmed = std.mem.trimLeft(u8, request.head.target, "/");
+        const trimmed = std.mem.trimStart(u8, request.head.target, "/");
         const value = try std.fmt.parseInt(i32, trimmed, 10);
 
         try request.respond("", .{ .status = @enumFromInt(value) });

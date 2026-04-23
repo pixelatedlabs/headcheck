@@ -19,13 +19,13 @@ pub fn main(init: std.process.Init) !void {
         .version = args[2],
     };
 
-    try testInvalidUrl(allocator, testArgs);
-    try testHelpText(allocator, testArgs);
-    try testTooFewArguments(allocator, testArgs);
-    try testTooManyArguments(allocator, testArgs);
-    try testValidUrlWithSuccessfulResponse(allocator, testArgs);
-    try testValidUrlWithUnsuccessfulResponse(allocator, testArgs);
-    try testVersionText(allocator, testArgs);
+    try testInvalidUrl(allocator, init.io, testArgs);
+    try testHelpText(allocator, init.io, testArgs);
+    try testTooFewArguments(allocator, init.io, testArgs);
+    try testTooManyArguments(allocator, init.io, testArgs);
+    try testValidUrlWithSuccessfulResponse(allocator, init.io, testArgs);
+    try testValidUrlWithUnsuccessfulResponse(allocator, init.io, testArgs);
+    try testVersionText(allocator, init.io, testArgs);
 
     running = false;
     const connection = std.net.tcpConnectToAddress(address) catch return;
@@ -56,73 +56,66 @@ fn run() !void {
     }
 }
 
-fn testInvalidUrl(allocator: std.mem.Allocator, args: Args) !void {
-    const child = try std.process.Child.run(.{
-        .allocator = allocator,
+fn testInvalidUrl(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
+    const child = try std.process.run(allocator, io, .{
         .argv = &[_][]const u8{ args.binary, "baz" },
     });
 
-    try std.testing.expectEqual(2, child.term.Exited);
+    try std.testing.expectEqual(2, child.term.exited);
     try std.testing.expectEqualStrings("unparseable: baz\n", child.stdout);
 }
 
-fn testHelpText(allocator: std.mem.Allocator, args: Args) !void {
-    const child = try std.process.Child.run(.{
-        .allocator = allocator,
+fn testHelpText(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
+    const child = try std.process.run(allocator, io, .{
         .argv = &[_][]const u8{ args.binary, "--help" },
     });
 
-    try std.testing.expectEqual(0, child.term.Exited);
+    try std.testing.expectEqual(0, child.term.exited);
     try std.testing.expectEqualStrings("docs: https://pixelatedlabs.com/headcheck\n", child.stdout);
 }
 
-fn testTooFewArguments(allocator: std.mem.Allocator, args: Args) !void {
-    const child = try std.process.Child.run(.{
-        .allocator = allocator,
+fn testTooFewArguments(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
+    const child = try std.process.run(allocator, io, .{
         .argv = &[_][]const u8{args.binary},
     });
 
-    try std.testing.expectEqual(2, child.term.Exited);
+    try std.testing.expectEqual(2, child.term.exited);
     try std.testing.expectEqualStrings("usage: headcheck <url>\n", child.stdout);
 }
 
-fn testTooManyArguments(allocator: std.mem.Allocator, args: Args) !void {
-    const child = try std.process.Child.run(.{
-        .allocator = allocator,
+fn testTooManyArguments(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
+    const child = try std.process.run(allocator, io, .{
         .argv = &[_][]const u8{ args.binary, "foo", "bar" },
     });
 
-    try std.testing.expectEqual(2, child.term.Exited);
+    try std.testing.expectEqual(2, child.term.exited);
     try std.testing.expectEqualStrings("usage: headcheck <url>\n", child.stdout);
 }
 
-fn testValidUrlWithSuccessfulResponse(allocator: std.mem.Allocator, args: Args) !void {
-    const child = try std.process.Child.run(.{
-        .allocator = allocator,
+fn testValidUrlWithSuccessfulResponse(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
+    const child = try std.process.run(allocator, io, .{
         .argv = &[_][]const u8{ args.binary, "http://localhost:47638/200" },
     });
 
-    try std.testing.expectEqual(0, child.term.Exited);
+    try std.testing.expectEqual(0, child.term.exited);
     try std.testing.expectEqualStrings("success: 200\n", child.stdout);
 }
 
-fn testValidUrlWithUnsuccessfulResponse(allocator: std.mem.Allocator, args: Args) !void {
-    const child = try std.process.Child.run(.{
-        .allocator = allocator,
+fn testValidUrlWithUnsuccessfulResponse(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
+    const child = try std.process.run(allocator, io, .{
         .argv = &[_][]const u8{ args.binary, "http://localhost:47638/301" },
     });
 
-    try std.testing.expectEqual(1, child.term.Exited);
+    try std.testing.expectEqual(1, child.term.exited);
     try std.testing.expectEqualStrings("failure: 301\n", child.stdout);
 }
 
-fn testVersionText(allocator: std.mem.Allocator, args: Args) !void {
-    const child = try std.process.Child.run(.{
-        .allocator = allocator,
+fn testVersionText(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
+    const child = try std.process.run(allocator, io, .{
         .argv = &[_][]const u8{ args.binary, "--version" },
     });
 
     const output = try std.fmt.allocPrint(allocator, "version: {s}\n", .{args.version});
-    try std.testing.expectEqual(0, child.term.Exited);
+    try std.testing.expectEqual(0, child.term.exited);
     try std.testing.expectEqualStrings(output, child.stdout);
 }

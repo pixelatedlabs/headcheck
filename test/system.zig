@@ -7,13 +7,9 @@ const Args = struct { binary: []u8, version: []u8 };
 const address = std.net.Address.initIp4([_]u8{ 127, 0, 0, 1 }, 47638);
 var running = true;
 
-pub fn main() !void {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    const allocator = arena.allocator();
-    defer arena.deinit();
-
-    const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
+pub fn main(init: std.process.Init) !void {
+    const allocator = init.arena.allocator();
+    const args = try init.minimal.args.toSlice(allocator);
 
     var thread = try std.Thread.spawn(.{}, run, .{});
     defer thread.join();

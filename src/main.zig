@@ -3,15 +3,11 @@
 const config = @import("config");
 const std = @import("std");
 
-pub fn main() !void {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    const allocator = arena.allocator();
-    defer arena.deinit();
+pub fn main(init: std.process.Init) !void {
+    const allocator = init.arena.allocator();
+    const args = try init.minimal.args.toSlice(allocator);
 
-    const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
-
-    var out = std.fs.File.stdout().writer(&.{});
+    var out = std.Io.File.stdout().writer(init.io, &.{});
     defer out.interface.flush() catch {};
 
     if (args.len != 2) {
@@ -29,7 +25,7 @@ pub fn main() !void {
         std.process.exit(0);
     }
 
-    var client = std.http.Client{ .allocator = allocator };
+    var client = std.http.Client{ .allocator = allocator, .io = init.io };
     defer client.deinit();
 
     const body = try allocator.alloc(u8, 1024);

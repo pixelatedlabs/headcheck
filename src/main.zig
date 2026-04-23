@@ -25,7 +25,7 @@ pub fn main(init: std.process.Init) !void {
         std.process.exit(0);
     }
 
-    var client = std.http.Client{ .allocator = allocator };
+    var client = std.http.Client{ .allocator = allocator, .io = init.io };
     defer client.deinit();
 
     const body = try allocator.alloc(u8, 1024);

@@ -2,7 +2,7 @@
 
 const std = @import("std");
 
-const Args = struct { binary: []u8, version: []u8 };
+const Args = struct { binary: []const u8, version: []const u8 };
 
 const address = std.Io.net.Ip4Address{ .bytes = [_]u8{ 127, 0, 0, 1 }, .port = 47638 };
 var running = true;

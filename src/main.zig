@@ -9,7 +9,7 @@ pub fn main(init: std.process.Init) !void {
     const args = try init.minimal.args.toSlice(allocator);
     defer std.process.argsFree(allocator, args);
 
-    var out = std.fs.File.stdout().writer(&.{});
+    var out = std.Io.File.stdout().writer(init.io, &.{});
     defer out.interface.flush() catch {};
 
     if (args.len != 2) {

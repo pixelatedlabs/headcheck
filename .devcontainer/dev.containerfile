@@ -3,7 +3,7 @@
 FROM quay.io/fedora/fedora:43
 
 ARG FREEZE=0.2.2
-ARG ZIG=0.15.2
+ARG ZIG=0.16.0
 
 ENV PATH=/opt/zig:$PATH
 

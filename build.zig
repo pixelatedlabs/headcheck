@@ -52,7 +52,7 @@ pub fn build(b: *std.Build) void {
 
     // Compress release executable using UPX.
     const upx_step = b.addSystemCommand(&.{ "upx", "--lzma", "-9" });
-    upx_step.stdio = .{ .check = .{} };
+    upx_step.stdio = .{ .check = .empty };
     upx_step.addFileArg(compile_release_output);
     upx_step.step.dependOn(&compile_release_step.step);
 

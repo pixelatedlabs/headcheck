@@ -4,7 +4,7 @@ const std = @import("std");
 
 const Args = struct { binary: []u8, version: []u8 };
 
-const address = std.net.Address.initIp4([_]u8{ 127, 0, 0, 1 }, 47638);
+const address = std.Io.net.Ip4Address{ .bytes = [_]u8{ 127, 0, 0, 1 }, .port = 47638 };
 var running = true;
 
 pub fn main(init: std.process.Init) !void {

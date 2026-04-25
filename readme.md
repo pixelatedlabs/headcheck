@@ -36,8 +36,8 @@ There are very few ways to (mis)use headcheck:
 | `headcheck http://bad.gateway`  | failure: 502                              | 1         |
 | `headcheck http://unknown.host` | error: UnknownHostName                    | 1         |
 | `headcheck missing.scheme`      | unparseable: missing.scheme               | 2         |
-| `headcheck --help`              | docs: https://pixelatedlabs.com/headcheck | 0         |
-| `headcheck --version`           | version: 1.2.3                            | 0         |
+| `headcheck [--help\|-h]`        | docs: https://pixelatedlabs.com/headcheck | 0         |
+| `headcheck [--version\|-v]`     | version: 1.2.3                            | 0         |
 | `headcheck invalid arguments`   | usage: headcheck &lt;url&gt;              | 2         |
 | `headcheck`                     | usage: headcheck &lt;url&gt;              | 2         |
 

@@ -18,12 +18,12 @@ pub fn main(init: std.process.Init) !void {
         std.process.exit(2);
     }
 
-    if (std.mem.eql(u8, args[1], "--help")) {
+    if (std.mem.eql(u8, args[1], "--help") || std.mem.eql(u8, args[1], "-h")) {
         out.interface.print("docs: https://pixelatedlabs.com/headcheck\n", .{}) catch {};
         std.process.exit(0);
     }
 
-    if (std.mem.eql(u8, args[1], "--version")) {
+    if (std.mem.eql(u8, args[1], "--version") || std.mem.eql(u8, args[1], "-v")) {
         out.interface.print("version: {s}\n", .{config.version}) catch {};
         std.process.exit(0);
     }

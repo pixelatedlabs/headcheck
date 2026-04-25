@@ -3,7 +3,7 @@
 const config = @import("config");
 const std = @import("std");
 
-pub fn main(init: std.process.Init) !void {
+pub fn main(init: std.process.Init) !u8 {
     const allocator = init.arena.allocator();
     const args = try init.minimal.args.toSlice(allocator);
 
@@ -15,17 +15,17 @@ pub fn main(init: std.process.Init) !void {
 
     if (args.len != 2) {
         err.interface.print("usage: headcheck <url>\n", .{}) catch {};
-        std.process.exit(2);
+        return 2;
     }
 
     if (std.mem.eql(u8, args[1], "--help") or std.mem.eql(u8, args[1], "-h")) {
         out.interface.print("docs: https://pixelatedlabs.com/headcheck\n", .{}) catch {};
-        std.process.exit(0);
+        return 0;
     }
 
     if (std.mem.eql(u8, args[1], "--version") or std.mem.eql(u8, args[1], "-v")) {
         out.interface.print("version: {s}\n", .{config.version}) catch {};
-        std.process.exit(0);
+        return 0;
     }
 
     var client = std.http.Client{ .allocator = allocator, .io = init.io };
@@ -33,7 +33,7 @@ pub fn main(init: std.process.Init) !void {
 
     const url = std.Uri.parse(args[1]) catch {
         err.interface.print("unparseable: {s}\n", .{args[1]}) catch {};
-        std.process.exit(2);
+        return 2;
     };
 
     var request = try client.request(.GET, url, .{ .redirect_behavior = .unhandled });
@@ -45,8 +45,9 @@ pub fn main(init: std.process.Init) !void {
 
     if (status < 200 or status >= 300) {
         err.interface.print("failure: {d}\n", .{status}) catch {};
-        std.process.exit(1);
+        return 1;
     }
 
     out.interface.print("success: {d}\n", .{status}) catch {};
+    return 0;
 }

@@ -20,12 +20,14 @@ pub fn main(init: std.process.Init) !void {
     };
 
     try testInvalidUrl(allocator, init.io, testArgs);
-    try testHelpText(allocator, init.io, testArgs);
+    try testHelpLongText(allocator, init.io, testArgs);
+    try testHelpShortText(allocator, init.io, testArgs);
     try testTooFewArguments(allocator, init.io, testArgs);
     try testTooManyArguments(allocator, init.io, testArgs);
     try testValidUrlWithSuccessfulResponse(allocator, init.io, testArgs);
     try testValidUrlWithUnsuccessfulResponse(allocator, init.io, testArgs);
-    try testVersionText(allocator, init.io, testArgs);
+    try testVersionLongText(allocator, init.io, testArgs);
+    try testVersionShortText(allocator, init.io, testArgs);
 
     running = false;
     const connection = address.connect(init.io, .{ .mode = .stream }) catch return;
@@ -66,9 +68,19 @@ fn testInvalidUrl(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
     try std.testing.expectEqualStrings("", child.stdout);
 }
 
-fn testHelpText(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
+fn testHelpLongText(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
     const child = try std.process.run(allocator, io, .{
         .argv = &[_][]const u8{ args.binary, "--help" },
+    });
+
+    try std.testing.expectEqual(0, child.term.exited);
+    try std.testing.expectEqualStrings("", child.stderr);
+    try std.testing.expectEqualStrings("docs: https://pixelatedlabs.com/headcheck\n", child.stdout);
+}
+
+fn testHelpShortText(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
+    const child = try std.process.run(allocator, io, .{
+        .argv = &[_][]const u8{ args.binary, "-h" },
     });
 
     try std.testing.expectEqual(0, child.term.exited);
@@ -116,9 +128,20 @@ fn testValidUrlWithUnsuccessfulResponse(allocator: std.mem.Allocator, io: std.Io
     try std.testing.expectEqualStrings("", child.stdout);
 }
 
-fn testVersionText(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
+fn testVersionLongText(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
     const child = try std.process.run(allocator, io, .{
         .argv = &[_][]const u8{ args.binary, "--version" },
+    });
+
+    const output = try std.fmt.allocPrint(allocator, "version: {s}\n", .{args.version});
+    try std.testing.expectEqual(0, child.term.exited);
+    try std.testing.expectEqualStrings("", child.stderr);
+    try std.testing.expectEqualStrings(output, child.stdout);
+}
+
+fn testVersionShortText(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
+    const child = try std.process.run(allocator, io, .{
+        .argv = &[_][]const u8{ args.binary, "-v" },
     });
 
     const output = try std.fmt.allocPrint(allocator, "version: {s}\n", .{args.version});

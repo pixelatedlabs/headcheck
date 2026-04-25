@@ -30,7 +30,7 @@ substantially increasing their size or attack surface.
 
 There are very few ways to (mis)use headcheck:
 
-| Command                         | Standard Output                           | Exit Code |
+| Command                         | Standard Error / Output                   | Exit Code |
 | ------------------------------- | ----------------------------------------- | --------- |
 | `headcheck http://no.content`   | success: 204                              | 0         |
 | `headcheck http://bad.gateway`  | failure: 502                              | 1         |
@@ -40,6 +40,8 @@ There are very few ways to (mis)use headcheck:
 | `headcheck --version`           | version: 1.2.3                            | 0         |
 | `headcheck invalid arguments`   | usage: headcheck &lt;url&gt;              | 2         |
 | `headcheck`                     | usage: headcheck &lt;url&gt;              | 2         |
+
+> Exit code `0` only writes to `stdout`, all other exit codes only write to `stderr`.
 
 # Example
 

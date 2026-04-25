@@ -7,11 +7,14 @@ pub fn main(init: std.process.Init) !void {
     const allocator = init.arena.allocator();
     const args = try init.minimal.args.toSlice(allocator);
 
+    var err = std.Io.File.stderr().writer(init.io, &.{});
+    defer err.interface.flush() catch {};
+
     var out = std.Io.File.stdout().writer(init.io, &.{});
     defer out.interface.flush() catch {};
 
     if (args.len != 2) {
-        out.interface.print("usage: headcheck <url>\n", .{}) catch {};
+        err.interface.print("usage: headcheck <url>\n", .{}) catch {};
         std.process.exit(2);
     }
 
@@ -32,7 +35,7 @@ pub fn main(init: std.process.Init) !void {
     defer allocator.free(body);
 
     const url = std.Uri.parse(args[1]) catch {
-        out.interface.print("unparseable: {s}\n", .{args[1]}) catch {};
+        err.interface.print("unparseable: {s}\n", .{args[1]}) catch {};
         std.process.exit(2);
     };
 
@@ -45,7 +48,7 @@ pub fn main(init: std.process.Init) !void {
     request.deinit();
 
     if (status < 200 or status >= 300) {
-        out.interface.print("failure: {d}\n", .{status}) catch {};
+        err.interface.print("failure: {d}\n", .{status}) catch {};
         std.process.exit(1);
     }
 

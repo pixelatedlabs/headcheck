@@ -62,7 +62,8 @@ fn testInvalidUrl(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
     });
 
     try std.testing.expectEqual(2, child.term.exited);
-    try std.testing.expectEqualStrings("unparseable: baz\n", child.stdout);
+    try std.testing.expectEqualStrings("unparseable: baz\n", child.stderr);
+    try std.testing.expectEqualStrings("", child.stdout);
 }
 
 fn testHelpText(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
@@ -71,6 +72,7 @@ fn testHelpText(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
     });
 
     try std.testing.expectEqual(0, child.term.exited);
+    try std.testing.expectEqualStrings("", child.stderr);
     try std.testing.expectEqualStrings("docs: https://pixelatedlabs.com/headcheck\n", child.stdout);
 }
 
@@ -80,7 +82,8 @@ fn testTooFewArguments(allocator: std.mem.Allocator, io: std.Io, args: Args) !vo
     });
 
     try std.testing.expectEqual(2, child.term.exited);
-    try std.testing.expectEqualStrings("usage: headcheck <url>\n", child.stdout);
+    try std.testing.expectEqualStrings("usage: headcheck <url>\n", child.stderr);
+    try std.testing.expectEqualStrings("", child.stdout);
 }
 
 fn testTooManyArguments(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
@@ -89,7 +92,8 @@ fn testTooManyArguments(allocator: std.mem.Allocator, io: std.Io, args: Args) !v
     });
 
     try std.testing.expectEqual(2, child.term.exited);
-    try std.testing.expectEqualStrings("usage: headcheck <url>\n", child.stdout);
+    try std.testing.expectEqualStrings("usage: headcheck <url>\n", child.stderr);
+    try std.testing.expectEqualStrings("", child.stdout);
 }
 
 fn testValidUrlWithSuccessfulResponse(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
@@ -98,6 +102,7 @@ fn testValidUrlWithSuccessfulResponse(allocator: std.mem.Allocator, io: std.Io, 
     });
 
     try std.testing.expectEqual(0, child.term.exited);
+    try std.testing.expectEqualStrings("", child.stderr);
     try std.testing.expectEqualStrings("success: 200\n", child.stdout);
 }
 
@@ -107,7 +112,8 @@ fn testValidUrlWithUnsuccessfulResponse(allocator: std.mem.Allocator, io: std.Io
     });
 
     try std.testing.expectEqual(1, child.term.exited);
-    try std.testing.expectEqualStrings("failure: 301\n", child.stdout);
+    try std.testing.expectEqualStrings("failure: 301\n", child.stderr);
+    try std.testing.expectEqualStrings("", child.stdout);
 }
 
 fn testVersionText(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
@@ -117,5 +123,6 @@ fn testVersionText(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
 
     const output = try std.fmt.allocPrint(allocator, "version: {s}\n", .{args.version});
     try std.testing.expectEqual(0, child.term.exited);
+    try std.testing.expectEqualStrings("", child.stderr);
     try std.testing.expectEqualStrings(output, child.stdout);
 }

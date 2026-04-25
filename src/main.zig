@@ -37,17 +37,17 @@ pub fn main(init: std.process.Init) !u8 {
     };
 
     var request = client.request(.GET, url, .{ .redirect_behavior = .unhandled }) catch {
-        err.interface.print("error: unknown host\n", .{}) catch {};
+        err.interface.print("failure: unknown host\n", .{}) catch {};
         return 1;
     };
     defer request.deinit();
     request.sendBodiless() catch {
-        err.interface.print("error: connection refused\n", .{}) catch {};
+        err.interface.print("failure: connection refused\n", .{}) catch {};
         return 1;
     };
 
     const response = request.receiveHead(&.{}) catch {
-        err.interface.print("error: connection refused\n", .{}) catch {};
+        err.interface.print("failure: connection refused\n", .{}) catch {};
         return 1;
     };
     const status = @intFromEnum(response.head.status);

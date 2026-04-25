@@ -65,7 +65,7 @@ fn testInvalidHost(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
     });
 
     try std.testing.expectEqual(1, child.term.exited);
-    try std.testing.expectEqualStrings("error: unknown host\n", child.stderr);
+    try std.testing.expectEqualStrings("failure: unknown host\n", child.stderr);
     try std.testing.expectEqualStrings("", child.stdout);
 }
 

@@ -41,9 +41,15 @@ pub fn main(init: std.process.Init) !u8 {
         return 1;
     };
     defer request.deinit();
-    try request.sendBodiless();
+    request.sendBodiless() catch {
+        err.interface.print("error: connection refused\n", .{}) catch {};
+        return 1;
+    };
 
-    const response = try request.receiveHead(&.{});
+    const response = request.receiveHead(&.{}) catch {
+        err.interface.print("error: connection refused\n", .{}) catch {};
+        return 1;
+    };
     const status = @intFromEnum(response.head.status);
 
     if (status < 200 or status >= 300) {

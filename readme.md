@@ -34,7 +34,7 @@ There are very few ways to (mis)use headcheck:
 | ------------------------------- | ----------------------------------------- | --------- |
 | `headcheck http://no.content`   | success: 204                              | 0         |
 | `headcheck http://bad.gateway`  | failure: 502                              | 1         |
-| `headcheck http://unknown.host` | error: UnknownHostName                    | 1         |
+| `headcheck http://unknown.host` | error: unknown host                       | 1         |
 | `headcheck missing.scheme`      | unparseable: missing.scheme               | 2         |
 | `headcheck [--help\|-h]`        | docs: https://pixelatedlabs.com/headcheck | 0         |
 | `headcheck [--version\|-v]`     | version: 1.2.3                            | 0         |

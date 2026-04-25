@@ -19,6 +19,7 @@ pub fn main(init: std.process.Init) !void {
         .version = args[2],
     };
 
+    try testInvalidHost(allocator, init.io, testArgs);
     try testInvalidUrl(allocator, init.io, testArgs);
     try testHelpLongText(allocator, init.io, testArgs);
     try testHelpShortText(allocator, init.io, testArgs);
@@ -56,6 +57,16 @@ fn run(io: std.Io) !void {
 
         try request.respond("", .{ .status = @enumFromInt(value) });
     }
+}
+
+fn testInvalidHost(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {
+    const child = try std.process.run(allocator, io, .{
+        .argv = &[_][]const u8{ args.binary, "http://unknown.local" },
+    });
+
+    try std.testing.expectEqual(1, child.term.exited);
+    try std.testing.expectEqualStrings("error: unknown host\n", child.stderr);
+    try std.testing.expectEqualStrings("", child.stdout);
 }
 
 fn testInvalidUrl(allocator: std.mem.Allocator, io: std.Io, args: Args) !void {

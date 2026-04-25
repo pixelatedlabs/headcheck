@@ -36,7 +36,10 @@ pub fn main(init: std.process.Init) !u8 {
         return 2;
     };
 
-    var request = try client.request(.GET, url, .{ .redirect_behavior = .unhandled });
+    var request = client.request(.GET, url, .{ .redirect_behavior = .unhandled }) catch {
+        err.interface.print("error: unknown host\n", .{}) catch {};
+        return 1;
+    };
     defer request.deinit();
     try request.sendBodiless();
 

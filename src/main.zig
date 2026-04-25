@@ -31,9 +31,6 @@ pub fn main(init: std.process.Init) !void {
     var client = std.http.Client{ .allocator = allocator, .io = init.io };
     defer client.deinit();
 
-    const body = try allocator.alloc(u8, 1024);
-    defer allocator.free(body);
-
     const url = std.Uri.parse(args[1]) catch {
         err.interface.print("unparseable: {s}\n", .{args[1]}) catch {};
         std.process.exit(2);
@@ -43,7 +40,7 @@ pub fn main(init: std.process.Init) !void {
     defer request.deinit();
     try request.sendBodiless();
 
-    const response = try request.receiveHead(body);
+    const response = try request.receiveHead(&.{});
     const status = @intFromEnum(response.head.status);
 
     if (status < 200 or status >= 300) {

@@ -41,7 +41,8 @@ There are very few ways to (mis)use headcheck:
 | `headcheck invalid arguments`   | usage: headcheck &lt;url&gt;              | 2         |
 | `headcheck`                     | usage: headcheck &lt;url&gt;              | 2         |
 
-> Exit code `0` only writes to `stdout`, all other exit codes only write to `stderr`.
+> [!tip]
+> When the exit code is `0` only `stdout` is written to, otherwise only `stderr` is written to.
 
 # Example
 
